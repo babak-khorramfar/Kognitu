@@ -20,10 +20,18 @@ from utils.config import TILE_IMAGE_PATH
 
 class MainWindow(QMainWindow):
     def __init__(self, controller=None):
-        super().__init__(controller)
+        # والد را خالی صدا می‌زنیم، نه controller!
+        super().__init__()
+        self.controller = controller
+
         self.setWindowTitle("Kognitu")
-        # پنجره ثابت و تمام‌صفحه
-        self.setWindowFlags(Qt.Window | Qt.CustomizeWindowHint | Qt.WindowTitleHint)
+        # پنجره تمام‌صفحه و غیرقابل کوچک‌شدن
+        self.setWindowFlags(
+            Qt.Window
+            | Qt.CustomizeWindowHint
+            | Qt.WindowTitleHint
+            | Qt.WindowCloseButtonHint
+        )
         self.showFullScreen()
 
         self.view = QGraphicsView()
