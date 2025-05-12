@@ -1,74 +1,69 @@
 # view/board_item.py
 
 from PyQt5.QtWidgets import QGraphicsPixmapItem, QGraphicsItem
+from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt, QPointF
-from PyQt5.QtGui import QTransform
 
 
 class BoardItem(QGraphicsPixmapItem):
-    def __init__(
-        self, placement, pixmap, tile_size, spacing, offset_x, offset_y, scene_rect
-    ):
-        super().__init__(pixmap)
-        self.placement = placement
-        self.tile_size = tile_size
-        self.spacing = spacing
-        self.offset_x = offset_x
-        self.offset_y = offset_y
-        self.scene_rect = scene_rect
+    def __init__(self, controller, pixmap_path, tile_size, spacing):
+        super().__init__()
+        self.controller = controller
+        self.tile_size = int(tile_size)  # اطمینان به int بودن
+        self.spacing = float(spacing)
 
+        # بارگذاری تصویر و تغییر سایز
+        pm = QPixmap(pixmap_path)
+        pm = pm.scaled(
+            self.tile_size, self.tile_size, Qt.KeepAspectRatio, Qt.SmoothTransformation
+        )
+        self.setPixmap(pm)
+
+        # مجاز بودن جابه‌جایی و ارسال تغییرات
         self.setFlags(
             QGraphicsItem.ItemIsMovable
             | QGraphicsItem.ItemIsSelectable
             | QGraphicsItem.ItemSendsGeometryChanges
         )
-        self.setTransformationMode(Qt.SmoothTransformation)
-        self.setTransformOriginPoint(pixmap.width() / 2, pixmap.height() / 2)
-        self.setScale(tile_size / pixmap.width())
+        # مرکز چرخش وسط تصویر
+        self.setTransformOriginPoint(pm.width() / 2, pm.height() / 2)
+
+        # ذخیرهٔ موقعیت و زاویهٔ قبل برای rollback
+        from PyQt5.QtCore import QPointF
+
+        self._last_pos = QPointF()
+        self._last_angle = 0
+
+    def mousePressEvent(self, event):
+        # ذخیرهٔ حالت قبل از حرکت/چرخش
+        self._last_pos = self.pos()
+        self._last_angle = self.rotation()
+        super().mousePressEvent(event)
 
     def contextMenuEvent(self, event):
         # راست‌کلیک چرخش 45 درجه
-        self.placement.angle = (self.placement.angle + 45) % 360
-        self.setRotation(self.placement.angle)
+        angle = (self.rotation() + 45) % 360
+        self.setRotation(angle)
 
-    def itemChange(self, change, value):
+    def mouseReleaseEvent(self, event):
+        # پس از آزادسازی ماوس، بررسی برخورد و خروج از صحنه
+        scene = self.scene()
         from PyQt5.QtCore import QRectF
 
-        if change == QGraphicsItem.ItemPositionChange and isinstance(value, QPointF):
-            scene = self.scene()
-            if scene is None:
-                return super().itemChange(change, value)
+        newRect = self.sceneBoundingRect()
 
-            newPos = value
-            grid = self.tile_size + self.spacing
-
-            # اسنپ به نزدیکترین نقطه‌ی گرید
-            col = round((newPos.x() - self.offset_x) / grid)
-            row = round((newPos.y() - self.offset_y) / grid)
-            x = self.offset_x + col * grid
-            y = self.offset_y + row * grid
-
-            # محدود کردن درون صحنه (با احتساب اندازه‌ی واقعی آیتم)
-            br = self.boundingRect().size() * self.scale()
-            w, h = br.width(), br.height()
-            x = min(max(x, self.scene_rect.left()), self.scene_rect.right() - w)
-            y = min(max(y, self.scene_rect.top()), self.scene_rect.bottom() - h)
-
-            # جلوگیری از هم‌پوشانی با دیگر آیتم‌ها
-            newRect = QRectF(x, y, w, h)
+        # اگر از صحنه خارج شد
+        if not scene.sceneRect().contains(newRect):
+            self.setPos(self._last_pos)
+            self.setRotation(self._last_angle)
+        else:
+            # بررسی برخورد با دیگر آیتم‌ها
             for other in scene.items():
-                if other is not self and isinstance(other, BoardItem):
-                    # رکت دیگر آیتم
-                    obr = other.boundingRect().size() * other.scale()
-                    orx = other.pos().x()
-                    ory = other.pos().y()
-                    otherRect = QRectF(orx, ory, obr.width(), obr.height())
-                    if newRect.intersects(otherRect):
-                        # اگر تداخل داشت، حرکت را لغو کن
-                        return super().itemChange(change, self.pos())
+                if other is self:
+                    continue
+                if newRect.intersects(other.sceneBoundingRect()):
+                    self.setPos(self._last_pos)
+                    self.setRotation(self._last_angle)
+                    break
 
-            # تأیید موقعیت جدید
-            self.placement.x, self.placement.y = col, row
-            return QPointF(x, y)
-
-        return super().itemChange(change, value)
+        super().mouseReleaseEvent(event)
