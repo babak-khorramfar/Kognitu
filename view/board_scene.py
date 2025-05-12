@@ -1,44 +1,46 @@
 # view/board_scene.py
 
 from PyQt5.QtWidgets import QGraphicsScene
-from view.board_item import BoardItem
 from PyQt5.QtGui import QPixmap
+from view.board_item import BoardItem
 
 
 class BoardScene(QGraphicsScene):
     """
-    A QGraphicsScene that displays a grid of BoardItem instances
-    with proper spacing and tile sizing.
+    Scene that arranges BoardItems based on placements and available view size.
     """
 
-    def __init__(
-        self,
-        rows: int,
-        cols: int,
-        tile_image_path: str,
-        tile_size: int,
-        spacing: int,
-        parent=None,
-    ):
+    def __init__(self, tile_image_path: str, parent=None):
         super().__init__(parent)
-        self.rows = rows
-        self.cols = cols
-        self.tile_size = tile_size
-        self.spacing = spacing
+        # تصویر تک‌تخته (60×60px) که برای همه‌ی آیتم‌ها استفاده می‌شود
+        self.pixmap = QPixmap(tile_image_path)
 
-        # Load the tile image
-        self.tile_image = QPixmap(tile_image_path)
-
-        # Compute total scene size:
-        total_w = cols * tile_size + (cols + 1) * spacing
-        total_h = rows * tile_size + (rows + 1) * spacing
-        self.setSceneRect(0, 0, total_w, total_h)
-
-    def load_layout(self, layout):
+    def load_layout(self, placements, view_width, view_height, spacing):
         """
-        Clear the scene and add one BoardItem per placement in layout.
+        placements: list of Placement
+        view_width, view_height: available display area in pixels
+        spacing: pixel gap between tiles
         """
         self.clear()
-        for placement in layout.placements:
-            item = BoardItem(placement, self.tile_image, self.tile_size, self.spacing)
+        # تعیین تعداد ستون و ردیف براساس مختصات حداکثر
+        cols = max(p.x for p in placements) + 1
+        rows = max(p.y for p in placements) + 1
+
+        # محاسبه اندازه‌ی هر tile به‌نحوی که در پنجره جا شود
+        tile_w = (view_width - spacing * (cols + 1)) / cols
+        tile_h = (view_height - spacing * (rows + 1)) / rows
+        tile_size = int(min(tile_w, tile_h))
+
+        # به‌روزرسانی محدوده‌ی صحنه
+        total_w = spacing + cols * (tile_size + spacing)
+        total_h = spacing + rows * (tile_size + spacing)
+        self.setSceneRect(0, 0, total_w, total_h)
+
+        # افزودن هر BoardItem در موقعیت و زاویه‌ی درست
+        for p in placements:
+            item = BoardItem(p, self.pixmap, tile_size)
+            x = spacing + p.x * (tile_size + spacing)
+            y = spacing + p.y * (tile_size + spacing)
+            item.setPos(x, y)
+            item.setRotation(p.angle)
             self.addItem(item)
