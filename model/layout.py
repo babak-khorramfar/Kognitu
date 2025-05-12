@@ -1,6 +1,7 @@
 # model/layout.py
 
 import json
+import math
 from typing import List
 from .placement import Placement
 
@@ -16,6 +17,23 @@ class Layout:
         self.rows = rows
         self.cols = cols
         self.placements = placements[:] if placements else []
+
+    @classmethod
+    def auto_grid(cls, count: int):
+        """
+        Automatically create a nearly square grid layout for `count` items.
+        Items are placed in row-major order.
+        """
+        cols = int(math.sqrt(count))
+        if cols < 1:
+            cols = 1
+        rows = math.ceil(count / cols)
+        placements = []
+        for i in range(count):
+            r = i // cols
+            c = i % cols
+            placements.append(Placement(x=c, y=r))
+        return cls(rows, cols, placements)
 
     def add(self, placement: Placement):
         """Add a new placement."""
