@@ -4,11 +4,11 @@
 Central configuration for Kognitu project.
 """
 
-# AI Model name (برای استفاده‌های آینده)
+# AI Model name (future use)
 MODEL_NAME = "gpt2"
 
-# مسیر تصویر هر تخته (PNG 60×60)
+# Path to the tile image file (each tile should be a 60×60 PNG)
 TILE_IMAGE_PATH = "resources/images/tile.png"
 
-# نسبت فاصله به اندازهٔ تخته (مثلاً ۲۰٪)
-SPACING_RATIO = 0.2
+# Factor for spacing: sqrt(2) to avoid overlap when rotated
+SPACING_FACTOR = 2**0.5
