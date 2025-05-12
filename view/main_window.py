@@ -27,7 +27,6 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Kognitu")
         self.resize(900, 700)
 
-        # ویجت گرافیکی
         self.view = QGraphicsView()
         self.scene = None
 
@@ -59,18 +58,16 @@ class MainWindow(QMainWindow):
         count = self.spin_count.value()
         layout = Layout.auto_grid(count)
 
-        # اندازه‌ی فضای قابل نمایش
+        # viewport dimensions
         view_width = self.view.viewport().width()
         view_height = self.view.viewport().height()
-        spacing = 10  # فاصله‌ی بین تخته‌ها
 
-        # ساخت و بارگذاری صحنه
         self.scene = BoardScene(TILE_IMAGE_PATH)
         self.view.setScene(self.scene)
-        self.scene.load_layout(layout.placements, view_width, view_height, spacing)
+        self.scene.load_layout(layout.placements, view_width, view_height)
 
         QMessageBox.information(
             self,
             "Layout Generated",
-            f"Generated {count} tiles with spacing {spacing}px.",
+            f"Generated {count} tiles centered with dynamic spacing.",
         )
