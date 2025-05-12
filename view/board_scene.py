@@ -10,7 +10,7 @@ from utils.config import DIAGONAL_SPACING_FACTOR
 class BoardScene(QGraphicsScene):
     """
     Scene that arranges BoardItems centered with dynamic tile size
-    and spacing to prevent any overlap when rotated.
+    and minimal spacing to prevent any overlap when rotated at 45 degrees.
     """
 
     def __init__(self, tile_image_path: str, parent=None):
@@ -19,22 +19,28 @@ class BoardScene(QGraphicsScene):
 
     def load_layout(self, placements, view_width, view_height):
         self.clear()
+        if not placements:
+            return
+
         cols = max(p.x for p in placements) + 1
         rows = max(p.y for p in placements) + 1
 
-        # compute base tile size
-        base_tile_w = view_width / (cols + DIAGONAL_SPACING_FACTOR)
-        base_tile_h = view_height / (rows + DIAGONAL_SPACING_FACTOR)
-        tile_size = int(min(base_tile_w, base_tile_h))
-        # spacing ensures no overlap at 45 degrees
-        spacing = int(tile_size * DIAGONAL_SPACING_FACTOR)
+        factor = DIAGONAL_SPACING_FACTOR  # ≈ sqrt(2)-1
+        # Compute grid factors
+        grid_factor_x = cols + (cols + 1) * factor
+        grid_factor_y = rows + (rows + 1) * factor
+
+        # Determine tile size to fit in view
+        tile_size = int(min(view_width / grid_factor_x, view_height / grid_factor_y))
+        spacing = tile_size * factor
 
         total_w = cols * tile_size + (cols + 1) * spacing
         total_h = rows * tile_size + (rows + 1) * spacing
-        # full scene covers entire view
+
+        # Use full view rect
         self.setSceneRect(0, 0, view_width, view_height)
 
-        # center offsets
+        # Center offsets
         offset_x = (view_width - total_w) / 2
         offset_y = (view_height - total_h) / 2
 
