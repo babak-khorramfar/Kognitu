@@ -13,26 +13,25 @@ from PyQt5.QtWidgets import (
     QGraphicsView,
 )
 from PyQt5.QtCore import QTimer, QEvent, Qt
-from model.layout import Layout
 from view.board_scene import BoardScene
 from utils.config import TILE_IMAGE_PATH
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, controller=None):
+    def __init__(self):
         super().__init__()
-        self.controller = controller
         self.setWindowTitle("Kognitu")
 
-        # نمایش تمام‌صفحه با دکمه‌ی Close فعال
+        # نمایش در حالت تمام‌صفحه و قفل resize
         self.showMaximized()
-        # قفل کردن سایز (غیرقابل resize)
         self.setFixedSize(self.size())
 
+        # ایجاد QGraphicsView برای صحنه
         self.view = QGraphicsView()
         self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.scene = None
+        self.scene = BoardScene(tile_image_path=TILE_IMAGE_PATH)
+        self.view.setScene(self.scene)
 
         self._init_ui()
 
@@ -43,11 +42,12 @@ class MainWindow(QMainWindow):
         self.spin.setValue(4)
 
         btn = QPushButton("Auto Layout")
-        btn.clicked.connect(self.on_generate)
+        btn.clicked.connect(self._do_layout)
 
         ctl = QHBoxLayout()
         ctl.addWidget(lbl)
         ctl.addWidget(self.spin)
+        ctl.addStretch()
         ctl.addWidget(btn)
 
         lay = QVBoxLayout()
@@ -58,7 +58,7 @@ class MainWindow(QMainWindow):
         container.setLayout(lay)
         self.setCentralWidget(container)
 
-        # وقتی viewport تغییر اندازه داد (مثلاً در showMaximized)
+        # وقتی سایز view تغییر کند، چیدمان دوباره ساخته می‌شود
         self.view.viewport().installEventFilter(self)
 
     def eventFilter(self, source, event):
@@ -66,19 +66,11 @@ class MainWindow(QMainWindow):
             QTimer.singleShot(50, self._do_layout)
         return super().eventFilter(source, event)
 
-    def on_generate(self):
-        self._do_layout()
-
     def _do_layout(self):
         count = self.spin.value()
-        layout = Layout.auto_grid(count)
         w = self.view.viewport().width()
         h = self.view.viewport().height()
-
-        if self.scene is None:
-            self.scene = BoardScene(TILE_IMAGE_PATH)
-            self.view.setScene(self.scene)
-        self.scene.load_layout(layout, w, h)
+        self.scene.auto_layout(count, w, h)
 
 
 if __name__ == "__main__":

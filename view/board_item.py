@@ -1,69 +1,67 @@
 # view/board_item.py
 
-from PyQt5.QtWidgets import QGraphicsPixmapItem, QGraphicsItem
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtWidgets import QGraphicsPixmapItem
 from PyQt5.QtCore import Qt, QPointF
+from PyQt5.QtGui import QPixmap
 
 
 class BoardItem(QGraphicsPixmapItem):
-    def __init__(self, controller, pixmap_path, tile_size, spacing):
+    def __init__(self, image_path, tile_size, spacing):
         super().__init__()
-        self.controller = controller
-        self.tile_size = int(tile_size)  # اطمینان به int بودن
-        self.spacing = float(spacing)
 
-        # بارگذاری تصویر و تغییر سایز
-        pm = QPixmap(pixmap_path)
-        pm = pm.scaled(
+        self.tile_size = int(tile_size)
+        self.spacing = spacing
+
+        # بارگذاری تصویر و مقیاس‌دهی
+        pixmap = QPixmap(image_path)
+        pixmap = pixmap.scaled(
             self.tile_size, self.tile_size, Qt.KeepAspectRatio, Qt.SmoothTransformation
         )
-        self.setPixmap(pm)
+        self.setPixmap(pixmap)
 
-        # مجاز بودن جابه‌جایی و ارسال تغییرات
+        # فعال‌سازی قابلیت جابجایی و انتخاب
         self.setFlags(
-            QGraphicsItem.ItemIsMovable
-            | QGraphicsItem.ItemIsSelectable
-            | QGraphicsItem.ItemSendsGeometryChanges
+            QGraphicsPixmapItem.ItemIsMovable
+            | QGraphicsPixmapItem.ItemIsSelectable
+            | QGraphicsPixmapItem.ItemSendsGeometryChanges
         )
-        # مرکز چرخش وسط تصویر
-        self.setTransformOriginPoint(pm.width() / 2, pm.height() / 2)
 
-        # ذخیرهٔ موقعیت و زاویهٔ قبل برای rollback
-        from PyQt5.QtCore import QPointF
+        # نقطهٔ چرخش: مرکز تصویر
+        self.setTransformOriginPoint(self.boundingRect().center())
 
+        # ذخیره موقعیت قبلی برای بازگشت در صورت برخورد
         self._last_pos = QPointF()
-        self._last_angle = 0
+        self._last_rotation = 0
 
     def mousePressEvent(self, event):
-        # ذخیرهٔ حالت قبل از حرکت/چرخش
         self._last_pos = self.pos()
-        self._last_angle = self.rotation()
+        self._last_rotation = self.rotation()
         super().mousePressEvent(event)
 
-    def contextMenuEvent(self, event):
-        # راست‌کلیک چرخش 45 درجه
-        angle = (self.rotation() + 45) % 360
-        self.setRotation(angle)
+    def mouseDoubleClickEvent(self, event):
+        # چرخش ۴۵ درجه در هر دابل‌کلیک
+        self.setRotation((self.rotation() + 45) % 360)
+        super().mouseDoubleClickEvent(event)
 
     def mouseReleaseEvent(self, event):
-        # پس از آزادسازی ماوس، بررسی برخورد و خروج از صحنه
         scene = self.scene()
-        from PyQt5.QtCore import QRectF
+        if not scene:
+            return super().mouseReleaseEvent(event)
 
-        newRect = self.sceneBoundingRect()
+        my_rect = self.sceneBoundingRect()
 
-        # اگر از صحنه خارج شد
-        if not scene.sceneRect().contains(newRect):
+        # اگر از کادر صحنه خارج شد → بازگشت
+        if not scene.sceneRect().contains(my_rect):
             self.setPos(self._last_pos)
-            self.setRotation(self._last_angle)
-        else:
-            # بررسی برخورد با دیگر آیتم‌ها
-            for other in scene.items():
-                if other is self:
-                    continue
-                if newRect.intersects(other.sceneBoundingRect()):
+            self.setRotation(self._last_rotation)
+            return super().mouseReleaseEvent(event)
+
+        # اگر با آیتمی دیگر برخورد داشت → بازگشت
+        for item in scene.items():
+            if item is not self and isinstance(item, QGraphicsPixmapItem):
+                if self.collidesWithItem(item):
                     self.setPos(self._last_pos)
-                    self.setRotation(self._last_angle)
+                    self.setRotation(self._last_rotation)
                     break
 
         super().mouseReleaseEvent(event)

@@ -1,62 +1,52 @@
 # view/board_scene.py
 
+import math
 from PyQt5.QtWidgets import QGraphicsScene
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtCore import QRectF
 from view.board_item import BoardItem
-from model.layout import Layout
-from utils.config import TILE_IMAGE_PATH, SPACING_RATIO
+from utils.config import SPACING_FACTOR
 
 
 class BoardScene(QGraphicsScene):
-    def __init__(self, tile_image_path: str, parent=None):
-        super().__init__(parent)
-        self.pixmap = QPixmap(tile_image_path)
+    def __init__(self, tile_image_path):
+        super().__init__()
+        self.tile_image_path = tile_image_path
+        self.items_list = []
 
-    def load_layout(self, layout: Layout, view_w: int, view_h: int):
-        self.clear()
-        placements = layout.placements
-        if not placements:
-            return
+    def auto_layout(self, count, view_width, view_height):
+        # پاک‌سازی صحنه و آیتم‌ها
+        for item in self.items():
+            self.removeItem(item)
+        self.items_list.clear()
+        self.setSceneRect(QRectF(0, 0, view_width, view_height))
 
         # تعداد ردیف و ستون
-        cols = max(p.x for p in placements) + 1
-        rows = max(p.y for p in placements) + 1
+        cols = math.ceil(math.sqrt(count))
+        rows = math.ceil(count / cols)
 
-        # ابتدا حداکثر سایز tile بر اساس view محاسبه می‌کنیم
-        # با فرض spacing نسبت به tile ثابت
-        # total_w = cols*tile + (cols-1)*spacing
-        # spacing = tile * SPACING_RATIO
-        # بنابراین total_w = tile*(cols + (cols-1)*SPACING_RATIO)
-        factor = 1 + (cols - 1) * SPACING_RATIO / cols
-        tile_w = view_w / (cols + (cols - 1) * SPACING_RATIO)
-        tile_h = view_h / (rows + (rows - 1) * SPACING_RATIO)
-        tile_size = int(min(tile_w, tile_h))
-        spacing = tile_size * SPACING_RATIO
+        # محاسبه tile_size و spacing
+        spacing_factor = SPACING_FACTOR  # مثلاً √2
+        tile_size_w = view_width / (cols + (cols + 1) * (spacing_factor - 1))
+        tile_size_h = view_height / (rows + (rows + 1) * (spacing_factor - 1))
+        tile_size = int(min(tile_size_w, tile_size_h))
+        spacing = tile_size * (spacing_factor - 1)
 
-        # عرض و ارتفاع گرید
+        # مرکزچین کردن گرید
         total_w = cols * tile_size + (cols - 1) * spacing
         total_h = rows * tile_size + (rows - 1) * spacing
+        offset_x = (view_width - total_w) / 2
+        offset_y = (view_height - total_h) / 2
 
-        # مرکزچین‌سازی
-        offset_x = (view_w - total_w) / 2
-        offset_y = (view_h - total_h) / 2
+        # ساخت و اضافه کردن تخته‌ها
+        for i in range(count):
+            row = i // cols
+            col = i % cols
+            x = offset_x + col * (tile_size + spacing)
+            y = offset_y + row * (tile_size + spacing)
 
-        # تنظیم صحنه
-        self.setSceneRect(0, 0, view_w, view_h)
-
-        # اضافه کردن آیتم‌ها
-        for p in placements:
             item = BoardItem(
-                placement=p,
-                pixmap=self.pixmap,
-                tile_size=tile_size,
-                spacing=spacing,
-                offset_x=offset_x,
-                offset_y=offset_y,
-                scene_rect=self.sceneRect(),
+                image_path=self.tile_image_path, tile_size=tile_size, spacing=spacing
             )
-            x = offset_x + p.x * (tile_size + spacing)
-            y = offset_y + p.y * (tile_size + spacing)
             item.setPos(x, y)
-            item.setRotation(p.angle)
             self.addItem(item)
+            self.items_list.append(item)
