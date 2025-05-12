@@ -1,6 +1,8 @@
 # view/main_window.py
 
+import sys
 from PyQt5.QtWidgets import (
+    QApplication,
     QMainWindow,
     QPushButton,
     QHBoxLayout,
@@ -9,7 +11,6 @@ from PyQt5.QtWidgets import (
     QSpinBox,
     QLabel,
     QGraphicsView,
-    QMessageBox,
 )
 from model.layout import Layout
 from view.board_scene import BoardScene
@@ -21,7 +22,7 @@ class MainWindow(QMainWindow):
     Main window with control for number of boards and interactive QGraphicsView.
     """
 
-    def __init__(self, controller):
+    def __init__(self, controller=None):
         super().__init__()
         self.controller = controller
         self.setWindowTitle("Kognitu")
@@ -33,41 +34,42 @@ class MainWindow(QMainWindow):
         self._init_ui()
 
     def _init_ui(self):
-        lbl_count = QLabel("Number of Boards:")
-        self.spin_count = QSpinBox()
-        self.spin_count.setRange(1, 100)
-        self.spin_count.setValue(4)
+        lbl = QLabel("Number of Boards:")
+        self.spin = QSpinBox()
+        self.spin.setRange(1, 100)
+        self.spin.setValue(4)
 
-        btn_generate = QPushButton("Auto Layout")
-        btn_generate.clicked.connect(self.on_generate)
+        btn = QPushButton("Auto Layout")
+        btn.clicked.connect(self.on_generate)
 
-        controls = QHBoxLayout()
-        controls.addWidget(lbl_count)
-        controls.addWidget(self.spin_count)
-        controls.addWidget(btn_generate)
+        ctl = QHBoxLayout()
+        ctl.addWidget(lbl)
+        ctl.addWidget(self.spin)
+        ctl.addWidget(btn)
 
-        main_layout = QVBoxLayout()
-        main_layout.addLayout(controls)
-        main_layout.addWidget(self.view)
+        lay = QVBoxLayout()
+        lay.addLayout(ctl)
+        lay.addWidget(self.view)
 
         container = QWidget()
-        container.setLayout(main_layout)
+        container.setLayout(lay)
         self.setCentralWidget(container)
 
     def on_generate(self):
-        count = self.spin_count.value()
+        count = self.spin.value()
         layout = Layout.auto_grid(count)
 
-        # viewport dimensions
-        view_width = self.view.viewport().width()
-        view_height = self.view.viewport().height()
+        w = self.view.viewport().width()
+        h = self.view.viewport().height()
 
         self.scene = BoardScene(TILE_IMAGE_PATH)
         self.view.setScene(self.scene)
-        self.scene.load_layout(layout.placements, view_width, view_height)
+        # بدون پیام!
+        self.scene.load_layout(layout, w, h)
 
-        QMessageBox.information(
-            self,
-            "Layout Generated",
-            f"Generated {count} tiles centered with dynamic spacing.",
-        )
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.showMaximized()
+    sys.exit(app.exec_())
