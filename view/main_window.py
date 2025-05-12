@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import (
     QLabel,
     QGraphicsView,
 )
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import QTimer, QEvent, Qt
 from model.layout import Layout
 from view.board_scene import BoardScene
 from utils.config import TILE_IMAGE_PATH
@@ -20,12 +20,15 @@ from utils.config import TILE_IMAGE_PATH
 
 class MainWindow(QMainWindow):
     def __init__(self, controller=None):
-        super().__init__()
-        self.controller = controller
+        super().__init__(controller)
         self.setWindowTitle("Kognitu")
-        self.resize(900, 700)
+        # پنجره ثابت و تمام‌صفحه
+        self.setWindowFlags(Qt.Window | Qt.CustomizeWindowHint | Qt.WindowTitleHint)
+        self.showFullScreen()
 
         self.view = QGraphicsView()
+        self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scene = None
 
         self._init_ui()
@@ -35,6 +38,7 @@ class MainWindow(QMainWindow):
         self.spin = QSpinBox()
         self.spin.setRange(1, 100)
         self.spin.setValue(4)
+
         btn = QPushButton("Auto Layout")
         btn.clicked.connect(self.on_generate)
 
@@ -42,6 +46,7 @@ class MainWindow(QMainWindow):
         ctl.addWidget(lbl)
         ctl.addWidget(self.spin)
         ctl.addWidget(btn)
+
         lay = QVBoxLayout()
         lay.addLayout(ctl)
         lay.addWidget(self.view)
@@ -50,25 +55,23 @@ class MainWindow(QMainWindow):
         container.setLayout(lay)
         self.setCentralWidget(container)
 
-        # بعد از resize یا maximize چیدمان مجدد کنیم
+        # وقتی viewport تغییر اندازه می‌دهد، مجدداً چینش انجام شود
         self.view.viewport().installEventFilter(self)
+
+    def eventFilter(self, source, event):
+        if source is self.view.viewport() and event.type() == QEvent.Resize:
+            QTimer.singleShot(50, self._do_layout)
+        return super().eventFilter(source, event)
 
     def on_generate(self):
         self._do_layout()
-
-    def eventFilter(self, source, event):
-        from PyQt5.QtCore import QEvent
-
-        if source is self.view.viewport() and event.type() == QEvent.Resize:
-            # زمان کوتاهی بعد از ریست شدن اندازه، layout را دوباره اعمال کن
-            QTimer.singleShot(50, self._do_layout)
-        return super().eventFilter(source, event)
 
     def _do_layout(self):
         count = self.spin.value()
         layout = Layout.auto_grid(count)
         w = self.view.viewport().width()
         h = self.view.viewport().height()
+
         if self.scene is None:
             self.scene = BoardScene(TILE_IMAGE_PATH)
             self.view.setScene(self.scene)
@@ -78,5 +81,4 @@ class MainWindow(QMainWindow):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
-    window.showMaximized()
     sys.exit(app.exec_())
