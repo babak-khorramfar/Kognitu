@@ -20,19 +20,14 @@ from utils.config import TILE_IMAGE_PATH
 
 class MainWindow(QMainWindow):
     def __init__(self, controller=None):
-        # والد را خالی صدا می‌زنیم، نه controller!
         super().__init__()
         self.controller = controller
-
         self.setWindowTitle("Kognitu")
-        # پنجره تمام‌صفحه و غیرقابل کوچک‌شدن
-        self.setWindowFlags(
-            Qt.Window
-            | Qt.CustomizeWindowHint
-            | Qt.WindowTitleHint
-            | Qt.WindowCloseButtonHint
-        )
-        self.showFullScreen()
+
+        # نمایش تمام‌صفحه با دکمه‌ی Close فعال
+        self.showMaximized()
+        # قفل کردن سایز (غیرقابل resize)
+        self.setFixedSize(self.size())
 
         self.view = QGraphicsView()
         self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -63,7 +58,7 @@ class MainWindow(QMainWindow):
         container.setLayout(lay)
         self.setCentralWidget(container)
 
-        # وقتی viewport تغییر اندازه می‌دهد، مجدداً چینش انجام شود
+        # وقتی viewport تغییر اندازه داد (مثلاً در showMaximized)
         self.view.viewport().installEventFilter(self)
 
     def eventFilter(self, source, event):
