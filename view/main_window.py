@@ -12,16 +12,13 @@ from PyQt5.QtWidgets import (
     QLabel,
     QGraphicsView,
 )
+from PyQt5.QtCore import QTimer
 from model.layout import Layout
 from view.board_scene import BoardScene
 from utils.config import TILE_IMAGE_PATH
 
 
 class MainWindow(QMainWindow):
-    """
-    Main window with control for number of boards and interactive QGraphicsView.
-    """
-
     def __init__(self, controller=None):
         super().__init__()
         self.controller = controller
@@ -38,7 +35,6 @@ class MainWindow(QMainWindow):
         self.spin = QSpinBox()
         self.spin.setRange(1, 100)
         self.spin.setValue(4)
-
         btn = QPushButton("Auto Layout")
         btn.clicked.connect(self.on_generate)
 
@@ -46,7 +42,6 @@ class MainWindow(QMainWindow):
         ctl.addWidget(lbl)
         ctl.addWidget(self.spin)
         ctl.addWidget(btn)
-
         lay = QVBoxLayout()
         lay.addLayout(ctl)
         lay.addWidget(self.view)
@@ -55,16 +50,28 @@ class MainWindow(QMainWindow):
         container.setLayout(lay)
         self.setCentralWidget(container)
 
+        # بعد از resize یا maximize چیدمان مجدد کنیم
+        self.view.viewport().installEventFilter(self)
+
     def on_generate(self):
+        self._do_layout()
+
+    def eventFilter(self, source, event):
+        from PyQt5.QtCore import QEvent
+
+        if source is self.view.viewport() and event.type() == QEvent.Resize:
+            # زمان کوتاهی بعد از ریست شدن اندازه، layout را دوباره اعمال کن
+            QTimer.singleShot(50, self._do_layout)
+        return super().eventFilter(source, event)
+
+    def _do_layout(self):
         count = self.spin.value()
         layout = Layout.auto_grid(count)
-
         w = self.view.viewport().width()
         h = self.view.viewport().height()
-
-        self.scene = BoardScene(TILE_IMAGE_PATH)
-        self.view.setScene(self.scene)
-        # بدون پیام!
+        if self.scene is None:
+            self.scene = BoardScene(TILE_IMAGE_PATH)
+            self.view.setScene(self.scene)
         self.scene.load_layout(layout, w, h)
 
 

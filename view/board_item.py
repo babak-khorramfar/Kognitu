@@ -2,19 +2,19 @@
 
 from PyQt5.QtWidgets import QGraphicsPixmapItem, QGraphicsItem
 from PyQt5.QtCore import Qt, QPointF
-from PyQt5.QtGui import QPixmap
 
 
 class BoardItem(QGraphicsPixmapItem):
-    # Graphics item for a board tile.
-    # Supports drag & drop snapping to grid and 45-degree rotation on right-click.
-    # placement: model.Placement instance
-    # tile_size: pixel size for display
-    def __init__(self, placement, pixmap: QPixmap, tile_size: int, spacing: int):
+    def __init__(
+        self, placement, pixmap, tile_size, spacing, offset_x, offset_y, scene_rect
+    ):
         super().__init__(pixmap)
         self.placement = placement
         self.tile_size = tile_size
         self.spacing = spacing
+        self.offset_x = offset_x
+        self.offset_y = offset_y
+        self.scene_rect = scene_rect
 
         self.setFlags(
             QGraphicsItem.ItemIsMovable
@@ -22,28 +22,33 @@ class BoardItem(QGraphicsPixmapItem):
             | QGraphicsItem.ItemSendsGeometryChanges
         )
         self.setTransformationMode(Qt.SmoothTransformation)
-        # rotate around center
         self.setTransformOriginPoint(pixmap.width() / 2, pixmap.height() / 2)
-        scale_factor = tile_size / pixmap.width()
-        self.setScale(scale_factor)
+        self.setScale(tile_size / pixmap.width())
 
     def contextMenuEvent(self, event):
-        # Right-click rotates by 45 degrees clockwise around center.
         self.placement.angle = (self.placement.angle + 45) % 360
         self.setRotation(self.placement.angle)
 
     def itemChange(self, change, value):
-        # Snap to grid on position change.
         if change == QGraphicsItem.ItemPositionChange and isinstance(value, QPointF):
+            # اسنپ به نزدیکترین مرکز فاصله‌ای
             newPos = value
-            grid_size = self.tile_size + self.spacing
-            col = round((newPos.x() - self.spacing) / grid_size)
-            row = round((newPos.y() - self.spacing) / grid_size)
-            col = max(0, col)
-            row = max(0, row)
-            self.placement.x = col
-            self.placement.y = row
-            x = self.spacing + col * grid_size
-            y = self.spacing + row * grid_size
+            grid = self.tile_size + self.spacing
+            # محاسبهٔ نزدیک‌ترین موقعیت با همان spacing
+            colf = (newPos.x() - self.offset_x) / grid
+            rowf = (newPos.y() - self.offset_y) / grid
+            # گرد کردن اعشار برای اسنپ
+            col = round(colf)
+            row = round(rowf)
+            x = self.offset_x + col * grid
+            y = self.offset_y + row * grid
+            # محدود کردن درون صحنه
+            x = min(
+                max(x, self.scene_rect.left()), self.scene_rect.right() - self.tile_size
+            )
+            y = min(
+                max(y, self.scene_rect.top()), self.scene_rect.bottom() - self.tile_size
+            )
+            self.placement.x, self.placement.y = col, row
             return QPointF(x, y)
         return super().itemChange(change, value)
