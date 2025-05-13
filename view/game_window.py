@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import (
     QComboBox,
     QPushButton,
     QGraphicsView,
+    QFrame,
 )
 from PyQt5.QtCore import Qt, QTimer, QEvent
 from view.board_scene import BoardScene
@@ -32,8 +33,11 @@ class GameWindow(QMainWindow):
         self._init_ui()
 
     def _init_ui(self):
-        sidebar = QVBoxLayout()
-        sidebar.setAlignment(Qt.AlignTop)
+        # 👉 سایدبار داخل یک QFrame مجزا قرار می‌گیره تا فقط اون رو استایل بدیم
+        sidebar_frame = QFrame()
+        sidebar_layout = QVBoxLayout(sidebar_frame)
+        sidebar_layout.setAlignment(Qt.AlignTop)
+        sidebar_frame.setFixedWidth(250)
 
         label_type = QLabel("Board Type:")
         self.combo_type = QComboBox()
@@ -54,12 +58,66 @@ class GameWindow(QMainWindow):
             self.combo_count,
             btn_generate,
         ]:
-            sidebar.addWidget(widget)
-            sidebar.addSpacing(10)
+            sidebar_layout.addWidget(widget)
+            sidebar_layout.addSpacing(10)
 
+        # 👉 فقط سایدبار رو تیره می‌کنیم
+        sidebar_frame.setStyleSheet(
+            """
+            QFrame {
+                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                                                  stop:0 #34495e, stop:1 #2c3e50);
+            }
+            QLabel {
+                font-family: "Pixel Game";
+                font-size: 24px;
+                color: #f0f0f0;
+                font-weight: bold;
+            }
+            QComboBox {
+                font-family: "Pixel Game";
+                font-size: 22px;
+                padding: 6px 12px;
+                border-radius: 10px;
+                background-color: #ecf0f1;
+                border: 2px solid #f39c12;
+                color: #2c3e50;
+            }
+            QComboBox::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 30px;
+                border-left: 1px solid #aaa;
+                border-top-right-radius: 10px;
+                border-bottom-right-radius: 10px;
+            }
+            QComboBox QAbstractItemView {
+                background-color: #ffffff;
+                selection-background-color: #f39c12;
+                selection-color: white;
+                border: 1px solid #bdc3c7;
+                font-size: 22px;
+            }
+            QPushButton {
+                font-family: "Pixel Game";
+                font-size: 28px;
+                padding: 10px 20px;
+                border-radius: 16px;
+                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                  stop:0 #fcd34d, stop:1 #f97316);
+                color: white;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #f59e0b;
+            }
+        """
+        )
+
+        # چیدمان اصلی: سایدبار + نمای گرید
         layout = QHBoxLayout()
-        layout.addLayout(sidebar, 1)
-        layout.addWidget(self.view, 5)
+        layout.addWidget(sidebar_frame)
+        layout.addWidget(self.view, stretch=1)
 
         container = QWidget()
         container.setLayout(layout)
