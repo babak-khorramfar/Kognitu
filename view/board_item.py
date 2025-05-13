@@ -19,7 +19,7 @@ class BoardItem(QGraphicsPixmapItem):
             self.tile_size, self.tile_size, Qt.KeepAspectRatio, Qt.SmoothTransformation
         )
 
-        self.flipped = False  # حالت اولیه: رو به بالا
+        self.flipped = False
         self.setPixmap(self.face_up_image)
 
         self.setFlags(
@@ -29,7 +29,6 @@ class BoardItem(QGraphicsPixmapItem):
         )
 
         self.setTransformOriginPoint(self.boundingRect().center())
-
         self._last_pos = QPointF()
         self._last_rotation = 0
 
@@ -51,7 +50,7 @@ class BoardItem(QGraphicsPixmapItem):
             return super().mouseReleaseEvent(event)
 
         my_rect = self.sceneBoundingRect()
-        if not scene.sceneRect().contains(my_rect):
+        if not scene.sceneRect().contains(my_rect) or self.pos().x() < scene.tile_size:
             self.setPos(self._last_pos)
             self.setRotation(self._last_rotation)
             return super().mouseReleaseEvent(event)
@@ -67,7 +66,4 @@ class BoardItem(QGraphicsPixmapItem):
 
     def toggle_flip(self):
         self.flipped = not self.flipped
-        if self.flipped:
-            self.setPixmap(self.face_down_image)
-        else:
-            self.setPixmap(self.face_up_image)
+        self.setPixmap(self.face_down_image if self.flipped else self.face_up_image)
