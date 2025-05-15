@@ -125,7 +125,8 @@ class BoardScene(QGraphicsScene):
         arrow.setFont(QFont("Pixel Game", 38, QFont.Bold))
         arrow.setDefaultTextColor(Qt.darkRed)
 
-        arrow_x = x + text_item.boundingRect().height() + 10
+        arrow_x = x + 40  # به‌صورت تجربی، این مقدار نزدیک‌ترین فاصله‌ست
+
         arrow_y = (
             y + (text_item.boundingRect().width() - arrow.boundingRect().height()) / 2
         )
