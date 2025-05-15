@@ -70,82 +70,84 @@ class BoardScene(QGraphicsScene):
         self._add_start_label(tile_size, view_height)
 
         # ساخت تخته‌ها
-        index = 0
-        for color in colors:
-            for _ in range(count_per_color):
-                row = index // cols
-                col = index % cols
-                x = offset_x + col * (tile_size + spacing)
-                y = offset_y + row * (tile_size + spacing)
+        if board_type == "4 Core" and count == 8:
+            top_y = view_height / 2 - tile_size - spacing / 2
+            bottom_y = view_height / 2 + spacing / 2
+            start_x = (view_width - (4 * tile_size + 3 * spacing)) / 2
 
+            for i in range(4):
+                color = colors[i]
                 face_down_path = f"{color_path}/{color}.png"
-                item = BoardItem(
-                    face_up_path=self.tile_image_path,
-                    face_down_path=face_down_path,
-                    tile_size=tile_size,
-                    spacing=spacing,
-                )
-                item.setPos(x, y)
-                self.addItem(item)
-                self.items_list.append(item)
-                index += 1
+                for y in [top_y, bottom_y]:
+                    x = start_x + i * (tile_size + spacing)
+                    item = BoardItem(
+                        face_up_path=self.tile_image_path,
+                        face_down_path=face_down_path,
+                        tile_size=tile_size,
+                        spacing=spacing,
+                    )
+                    item.setPos(x, y)
+                    self.addItem(item)
+                    self.items_list.append(item)
+            return
 
     def _add_start_label(self, tile_size, scene_height):
-        # کلمه START
+        # حذف آیتم‌های قبلی ثابت
+        for item in getattr(self, "static_items", []):
+            self.removeItem(item)
+        self.static_items = []
+
+        # --- قطب‌نما ---
+        compass = QPixmap("resources/images/compass.png").scaled(
+            100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation
+        )
+        compass_item = QGraphicsPixmapItem(compass)
+        compass_x = (tile_size - 100) / 2
+        compass_y = tile_size * 0.1
+        compass_item.setPos(compass_x, compass_y)
+        self.addItem(compass_item)
+        self.static_items.append(compass_item)
+
+        # --- کلمه START ---
         text_item = QGraphicsTextItem("START")
         font = QFont("Pixel Game", 42, QFont.Bold)
         text_item.setFont(font)
         text_item.setDefaultTextColor(Qt.darkRed)
         text_item.setRotation(90)
-
-        # تصویر قطب‌نما
-        compass = QPixmap("resources/images/compass.png").scaled(
-            100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation
-        )
-        compass_item = QGraphicsPixmapItem(compass)
-
-        # جای‌گذاری: بالا و وسط عرض محوطه START (که tile_size پهنا داره)
-        x = (tile_size - 100) / 2  # 100 = عرض تصویر
-        y = tile_size * 0.1  # کمی فاصله از بالا
-
-        compass_item.setPos(x, y)
-        self.addItem(compass_item)
-        self.static_items.append(compass_item)
-
-        # محاسبه موقعیت وسط صفحه
-        x = tile_size / 2
-        y = (scene_height - text_item.boundingRect().height()) / 2
-
-        text_item.setPos(x, y)
         self.addItem(text_item)
         self.static_items.append(text_item)
 
-        # فلش سمت راست
+        # --- فلش ---
         arrow = QGraphicsTextItem("→")
         arrow.setFont(QFont("Pixel Game", 38, QFont.Bold))
         arrow.setDefaultTextColor(Qt.darkRed)
-
-        arrow_x = x + 40  # به‌صورت تجربی، این مقدار نزدیک‌ترین فاصله‌ست
-
-        arrow_y = (
-            y + (text_item.boundingRect().width() - arrow.boundingRect().height()) / 2
-        )
-
-        arrow.setPos(arrow_x, arrow_y)
         self.addItem(arrow)
         self.static_items.append(arrow)
 
-        # خط‌چین جداکننده
-        from PyQt5.QtGui import QPen, QColor
+        # --- محاسبه موقعیت عمودی (وسط صفحه) ---
+        text_rect = text_item.boundingRect()
+        arrow_rect = arrow.boundingRect()
 
+        total_height = max(text_rect.width(), arrow_rect.height())
+        center_y = (scene_height - total_height) / 2
+
+        x = tile_size / 2
+        text_item.setPos(x, center_y)
+
+        arrow_x = x + 40  # فاصله افقی ثابت
+        arrow_y = center_y + (text_rect.width() - arrow_rect.height()) / 2
+        arrow.setPos(arrow_x, arrow_y)
+
+        # --- خط‌چین جداکننده ---
         pen = QPen(QColor("#bbbbbb"))
         pen.setStyle(Qt.DashLine)
         pen.setWidth(2)
-
         line_x = arrow_x + arrow.boundingRect().width() + 10
         line = self.addLine(line_x, 0, line_x, scene_height, pen)
         self.static_items.append(line)
-        self.restricted_x = line_x  # ذخیره محل خط‌چین برای مقایسه بعدی
+
+        # --- ذخیره موقعیت محدودیت قرارگیری تخته‌ها ---
+        self.restricted_x = line_x
 
     def clear_scene(self):
         for item in self.items_list:
