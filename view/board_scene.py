@@ -18,6 +18,7 @@ class BoardScene(QGraphicsScene):
         self.items_list = []
         self.static_items = []
         self.tile_size = 0  # برای استفاده در محدودسازی
+        self.restricted_x = None  # محل خط‌چین که باید محدودیت از اون اعمال بشه
 
     def auto_layout(self, count, view_width, view_height, board_type="4-color"):
         self.clear_scene()
@@ -143,6 +144,7 @@ class BoardScene(QGraphicsScene):
         line_x = arrow_x + arrow.boundingRect().width() + 10
         line = self.addLine(line_x, 0, line_x, scene_height, pen)
         self.static_items.append(line)
+        self.restricted_x = line_x  # ذخیره محل خط‌چین برای مقایسه بعدی
 
     def clear_scene(self):
         for item in self.items_list:

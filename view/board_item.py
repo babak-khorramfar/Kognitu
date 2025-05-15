@@ -92,7 +92,10 @@ class BoardItem(QGraphicsPixmapItem):
         my_rect = self.sceneBoundingRect()
 
         # بررسی اینکه تخته داخل ناحیه مجاز قرار دارد
-        if not scene.sceneRect().contains(my_rect) or self.pos().x() < scene.tile_size:
+        if not scene.sceneRect().contains(my_rect) or (
+            hasattr(scene, "restricted_x") and self.scenePos().x() < scene.restricted_x
+        ):
+
             self.setPos(self._last_pos)
             self.setRotation(self._last_rotation)
             return super().mouseReleaseEvent(event)
