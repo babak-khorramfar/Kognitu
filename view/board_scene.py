@@ -6,6 +6,9 @@ from PyQt5.QtCore import QRectF, Qt
 from PyQt5.QtGui import QFont
 from view.board_item import BoardItem
 from utils.config import TILE_IMAGE_PATH, SPACING_FACTOR
+from PyQt5.QtGui import QPen, QColor
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtWidgets import QGraphicsPixmapItem
 
 
 class BoardScene(QGraphicsScene):
@@ -13,6 +16,7 @@ class BoardScene(QGraphicsScene):
         super().__init__()
         self.tile_image_path = tile_image_path
         self.items_list = []
+        self.static_items = []
         self.tile_size = 0  # برای استفاده در محدودسازی
 
     def auto_layout(self, count, view_width, view_height, board_type="4-color"):
@@ -51,7 +55,7 @@ class BoardScene(QGraphicsScene):
         self.tile_size = tile_size  # ذخیره برای later use
 
         # ناحیه رزرو شده سمت چپ برای START
-        reserved_start_width = tile_size
+        reserved_start_width = int(tile_size * 0.6)
 
         # محاسبه offset برای center کردن باقی گرید
         total_w = cols * tile_size + (cols - 1) * spacing
@@ -86,18 +90,59 @@ class BoardScene(QGraphicsScene):
                 index += 1
 
     def _add_start_label(self, tile_size, scene_height):
+        # کلمه START
         text_item = QGraphicsTextItem("START")
-        font = QFont("Arial", int(tile_size / 2))
+        font = QFont("Pixel Game", 42, QFont.Bold)
         text_item.setFont(font)
-        text_item.setDefaultTextColor(Qt.black)
-        text_item.setRotation(-90)
+        text_item.setDefaultTextColor(Qt.darkRed)
+        text_item.setRotation(90)
 
-        # محاسبه محل قرارگیری وسط نوار سمت چپ
+        # تصویر قطب‌نما
+        compass = QPixmap("resources/images/compass.png").scaled(
+            100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation
+        )
+        compass_item = QGraphicsPixmapItem(compass)
+
+        # جای‌گذاری: بالا و وسط عرض محوطه START (که tile_size پهنا داره)
+        x = (tile_size - 100) / 2  # 100 = عرض تصویر
+        y = tile_size * 0.1  # کمی فاصله از بالا
+
+        compass_item.setPos(x, y)
+        self.addItem(compass_item)
+        self.static_items.append(compass_item)
+
+        # محاسبه موقعیت وسط صفحه
         x = tile_size / 2
-        y = scene_height / 2 + text_item.boundingRect().width() / 2
-        text_item.setPos(x, y)
+        y = (scene_height - text_item.boundingRect().height()) / 2
 
+        text_item.setPos(x, y)
         self.addItem(text_item)
+        self.static_items.append(text_item)
+
+        # فلش سمت راست
+        arrow = QGraphicsTextItem("→")
+        arrow.setFont(QFont("Pixel Game", 38, QFont.Bold))
+        arrow.setDefaultTextColor(Qt.darkRed)
+
+        arrow_x = x + text_item.boundingRect().height() + 10
+        arrow_y = (
+            y + (text_item.boundingRect().width() - arrow.boundingRect().height()) / 2
+        )
+
+        arrow.setPos(arrow_x, arrow_y)
+        self.addItem(arrow)
+        self.static_items.append(arrow)
+
+        # خط‌چین جداکننده
+        from PyQt5.QtGui import QPen, QColor
+
+        pen = QPen(QColor("#bbbbbb"))
+        pen.setStyle(Qt.DashLine)
+        pen.setWidth(2)
+
+        line_x = arrow_x + arrow.boundingRect().width() + 10
+        line = self.addLine(line_x, 0, line_x, scene_height, pen)
+        self.static_items.append(line)
 
     def clear_scene(self):
         for item in self.items_list:
@@ -106,3 +151,7 @@ class BoardScene(QGraphicsScene):
         for item in self.items():
             if isinstance(item, QGraphicsTextItem):
                 self.removeItem(item)
+
+        for item in self.static_items:
+            self.removeItem(item)
+        self.static_items.clear()
