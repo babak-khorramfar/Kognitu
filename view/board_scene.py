@@ -91,6 +91,36 @@ class BoardScene(QGraphicsScene):
                     self.items_list.append(item)
             return
 
+        if board_type == "4 Core" and count == 4:
+            # چیدمان خاص به ترتیب ساعتگرد: 3 1 / 4 2
+            start_x = (view_width - (2 * tile_size + spacing)) / 2
+            start_y = (view_height - (2 * tile_size + spacing)) / 2
+
+            # مکان‌ها: (row, col)
+            positions = [
+                (0, 1),  # شماره 1 - بالا راست (آبی)
+                (1, 1),  # شماره 2 - پایین راست (قرمز)
+                (0, 0),  # شماره 3 - بالا چپ (زرد)
+                (1, 0),  # شماره 4 - پایین چپ (سبز)
+            ]
+
+            for i, (row, col) in enumerate(positions):
+                color = colors[i]
+                face_down_path = f"{color_path}/{color}.png"
+                x = start_x + col * (tile_size + spacing)
+                y = start_y + row * (tile_size + spacing)
+
+                item = BoardItem(
+                    face_up_path=self.tile_image_path,
+                    face_down_path=face_down_path,
+                    tile_size=tile_size,
+                    spacing=spacing,
+                )
+                item.setPos(x, y)
+                self.addItem(item)
+                self.items_list.append(item)
+            return
+
     def _add_start_label(self, tile_size, scene_height):
         # حذف آیتم‌های قبلی ثابت
         for item in getattr(self, "static_items", []):
