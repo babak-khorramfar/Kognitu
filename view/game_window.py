@@ -41,7 +41,7 @@ class GameWindow(QMainWindow):
 
         label_type = QLabel("Board Type:")
         self.combo_type = QComboBox()
-        self.combo_type.addItems(["4-color", "9-color"])
+        self.combo_type.addItems(["4 Core", "9 Full"])
         self.combo_type.currentIndexChanged.connect(self.update_count_options)
 
         label_count = QLabel("Board Count:")
@@ -128,7 +128,7 @@ class GameWindow(QMainWindow):
     def update_count_options(self):
         self.combo_count.clear()
         board_type = self.combo_type.currentText()
-        if board_type == "4-color":
+        if board_type == "4 Core":
             self.combo_count.addItems(["4", "8", "12"])
         else:
             self.combo_count.addItems(["9", "18"])

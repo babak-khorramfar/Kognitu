@@ -20,12 +20,12 @@ class BoardScene(QGraphicsScene):
         self.tile_size = 0  # برای استفاده در محدودسازی
         self.restricted_x = None  # محل خط‌چین که باید محدودیت از اون اعمال بشه
 
-    def auto_layout(self, count, view_width, view_height, board_type="4-color"):
+    def auto_layout(self, count, view_width, view_height, board_type="4 Core"):
         self.clear_scene()
         self.setSceneRect(QRectF(0, 0, view_width, view_height))
 
         # رنگ‌ها
-        if board_type == "4-color":
+        if board_type == "4 Core":
             colors = ["blue", "red", "yellow", "green"]
             color_path = "resources/images/backs/4colors"
         else:
