@@ -45,7 +45,7 @@ class BoardItem(QGraphicsPixmapItem):
     def mouseMoveEvent(self, event):
         super().mouseMoveEvent(event)
 
-        if self.rotation() != 0:
+        if self.rotation() % 90 != 0:
             return
 
         scene = self.scene()
@@ -53,7 +53,7 @@ class BoardItem(QGraphicsPixmapItem):
             return
 
         my_rect = self.sceneBoundingRect()
-        snap_threshold = 10
+        snap_threshold = 20
 
         for item in scene.items():
             if item is self or not isinstance(item, QGraphicsPixmapItem):
@@ -89,28 +89,59 @@ class BoardItem(QGraphicsPixmapItem):
         if not scene:
             return super().mouseReleaseEvent(event)
 
-        my_rect = self.sceneBoundingRect()
+        grid_size = 20
 
-        # بررسی اینکه تخته داخل ناحیه مجاز قرار دارد
-        if not scene.sceneRect().contains(my_rect) or (
-            hasattr(scene, "restricted_x") and self.scenePos().x() < scene.restricted_x
-        ):
+        def is_illegal(pos: QPointF):
+            original = self.pos()
+            self.setPos(pos)
+            illegal = not scene.sceneRect().contains(self.sceneBoundingRect()) or (
+                hasattr(scene, "restricted_x")
+                and self.scenePos().x() < scene.restricted_x
+            )
+            if not illegal:
+                for item in scene.items():
+                    if item is self or not isinstance(item, QGraphicsPixmapItem):
+                        continue
+                    if self.collidesWithItem(item):
+                        illegal = True
+                        break
+            self.setPos(original)
+            return illegal
 
-            self.setPos(self._last_pos)
-            self.setRotation(self._last_rotation)
+        # اگه موقعیت فعلی قانونی بود → هیچی نکن
+        if not is_illegal(self.pos()):
             return super().mouseReleaseEvent(event)
 
-        # بررسی برخورد با تخته‌های دیگر
-        for item in scene.items():
-            if item is self or not isinstance(item, QGraphicsPixmapItem):
-                continue
-            if self.collidesWithItem(item):
-                self.setPos(self._last_pos)
-                self.setRotation(self._last_rotation)
-                break
+        # مرکز فعلی
+        center = self.sceneBoundingRect().center()
 
-        super().mouseReleaseEvent(event)
+        # اسنپ به گرید پایه
+        base_x = (
+            round(center.x() / grid_size) * grid_size - self.boundingRect().width() / 2
+        )
+        base_y = (
+            round(center.y() / grid_size) * grid_size - self.boundingRect().height() / 2
+        )
+
+        # جستجوی شعاعی اطراف نقطه فعلی تا حداکثر 7x7
+        max_radius = 3
+        for r in range(1, max_radius + 1):
+            for dx in range(-r, r + 1):
+                for dy in range(-r, r + 1):
+                    candidate = QPointF(
+                        base_x + dx * grid_size, base_y + dy * grid_size
+                    )
+                    if not is_illegal(candidate):
+                        self.setPos(candidate)
+                        return super().mouseReleaseEvent(event)
+
+        # اگه جایی پیدا نشد → بازگشت به موقعیت قبل
+        self.setPos(self._last_pos)
+        self.setRotation(self._last_rotation)
+        return super().mouseReleaseEvent(event)
 
     def toggle_flip(self):
         self.flipped = not self.flipped
+        current_pos = self.pos()
         self.setPixmap(self.face_down_image if self.flipped else self.face_up_image)
+        self.setPos(current_pos)
