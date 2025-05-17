@@ -1,5 +1,3 @@
-# view/game_window.py
-
 from PyQt5.QtWidgets import (
     QMainWindow,
     QWidget,
@@ -33,7 +31,6 @@ class GameWindow(QMainWindow):
         self._init_ui()
 
     def _init_ui(self):
-        # 👉 سایدبار داخل یک QFrame مجزا قرار می‌گیره تا فقط اون رو استایل بدیم
         sidebar_frame = QFrame()
         sidebar_layout = QVBoxLayout(sidebar_frame)
         sidebar_layout.setAlignment(Qt.AlignTop)
@@ -44,9 +41,8 @@ class GameWindow(QMainWindow):
         self.combo_type.addItems(["4 Core", "9 Full"])
         self.combo_type.currentIndexChanged.connect(self.update_count_options)
 
-        label_count = QLabel("Board Count:")
+        self.label_count = QLabel("Board Count:")
         self.combo_count = QComboBox()
-        self.update_count_options()
 
         btn_generate = QPushButton("Generate Layout")
         btn_generate.clicked.connect(self._do_layout)
@@ -54,14 +50,13 @@ class GameWindow(QMainWindow):
         for widget in [
             label_type,
             self.combo_type,
-            label_count,
+            self.label_count,
             self.combo_count,
             btn_generate,
         ]:
             sidebar_layout.addWidget(widget)
             sidebar_layout.addSpacing(10)
 
-        # 👉 فقط سایدبار رو تیره می‌کنیم
         sidebar_frame.setStyleSheet(
             """
             QFrame {
@@ -114,7 +109,6 @@ class GameWindow(QMainWindow):
         """
         )
 
-        # چیدمان اصلی: سایدبار + نمای گرید
         layout = QHBoxLayout()
         layout.addWidget(sidebar_frame)
         layout.addWidget(self.view, stretch=1)
@@ -123,6 +117,7 @@ class GameWindow(QMainWindow):
         container.setLayout(layout)
         self.setCentralWidget(container)
 
+        self.update_count_options()
         self.view.viewport().installEventFilter(self)
 
     def update_count_options(self):
@@ -130,12 +125,15 @@ class GameWindow(QMainWindow):
         board_type = self.combo_type.currentText()
         if board_type == "4 Core":
             self.combo_count.addItems(["4", "8", "12"])
+            self.label_count.show()
+            self.combo_count.show()
         else:
-            self.combo_count.addItems(["9", "18"])
+            self.label_count.hide()
+            self.combo_count.hide()
 
     def _do_layout(self):
-        count = int(self.combo_count.currentText())
         board_type = self.combo_type.currentText()
+        count = int(self.combo_count.currentText()) if board_type == "4 Core" else 9
         w = self.view.viewport().width()
         h = self.view.viewport().height()
         self.scene.auto_layout(count, w, h, board_type=board_type)
