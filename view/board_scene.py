@@ -9,6 +9,7 @@ from utils.config import TILE_IMAGE_PATH, SPACING_FACTOR
 from PyQt5.QtGui import QPen, QColor
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QGraphicsPixmapItem
+from PyQt5.QtCore import QPointF
 
 
 class BoardScene(QGraphicsScene):
@@ -86,7 +87,10 @@ class BoardScene(QGraphicsScene):
                         tile_size=tile_size,
                         spacing=spacing,
                     )
-                    item.setPos(x, y)
+                    grid_size = 20
+                    snapped_x = round(x / grid_size) * grid_size
+                    snapped_y = round(y / grid_size) * grid_size
+                    item.setPos(snapped_x, snapped_y)
                     self.addItem(item)
                     self.items_list.append(item)
             return
@@ -200,7 +204,7 @@ class BoardScene(QGraphicsScene):
 
         # --- کلمه START ---
         text_item = QGraphicsTextItem("START")
-        font = QFont("Pixel Game", 42, QFont.Bold)
+        font = QFont("Game Changer", 42, QFont.Bold)
         text_item.setFont(font)
         text_item.setDefaultTextColor(Qt.darkRed)
         text_item.setRotation(90)
@@ -209,7 +213,7 @@ class BoardScene(QGraphicsScene):
 
         # --- فلش ---
         arrow = QGraphicsTextItem("→")
-        arrow.setFont(QFont("Pixel Game", 38, QFont.Bold))
+        arrow.setFont(QFont("Game Changer", 38, QFont.Bold))
         arrow.setDefaultTextColor(Qt.darkRed)
         self.addItem(arrow)
         self.static_items.append(arrow)
@@ -250,3 +254,25 @@ class BoardScene(QGraphicsScene):
         for item in self.static_items:
             self.removeItem(item)
         self.static_items.clear()
+
+    def drawBackground(self, painter, rect):
+
+        grid_size = 20
+        # نمایش ندادن گرید، ولی حفظ کد برای آینده
+        # painter.setPen(Qt.NoPen)
+        return
+
+        left = int(rect.left()) - (int(rect.left()) % grid_size)
+        right = int(rect.right()) + grid_size
+        top = int(rect.top()) - (int(rect.top()) % grid_size)
+        bottom = int(rect.bottom()) + grid_size
+
+        for x in range(left, right, grid_size):
+            painter.drawLine(
+                QPointF(x + 0.5, rect.top()), QPointF(x + 0.5, rect.bottom())
+            )
+
+        for y in range(top, bottom, grid_size):
+            painter.drawLine(
+                QPointF(rect.left(), y + 0.5), QPointF(rect.right(), y + 0.5)
+            )
