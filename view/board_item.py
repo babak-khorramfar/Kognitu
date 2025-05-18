@@ -16,6 +16,7 @@ class BoardItem(QGraphicsPixmapItem):
         self.face_down_image = QPixmap(face_down_path).scaled(
             self.tile_size, self.tile_size, Qt.KeepAspectRatio, Qt.SmoothTransformation
         )
+        self.face_down_image_path = face_down_path  # برای ذخیره‌سازی
 
         self.flipped = False
         self.setPixmap(self.face_up_image)

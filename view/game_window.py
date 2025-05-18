@@ -8,11 +8,14 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QGraphicsView,
     QFrame,
+    QFileDialog,
 )
-from PyQt5.QtCore import Qt, QTimer, QEvent
+from PyQt5.QtCore import Qt, QTimer, QEvent, QPointF, QRectF
+import json
 from view.board_scene import BoardScene
-from model.layout import Layout
 from utils.config import TILE_IMAGE_PATH
+import json
+from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
 
 class GameWindow(QMainWindow):
@@ -47,12 +50,20 @@ class GameWindow(QMainWindow):
         btn_generate = QPushButton("Generate Layout")
         btn_generate.clicked.connect(self._do_layout)
 
+        btn_save = QPushButton("💾 Save Layout")
+        btn_save.clicked.connect(self.save_layout)
+
+        btn_load = QPushButton("📥 Load Layout")
+        btn_load.clicked.connect(self.load_layout)
+
         for widget in [
             label_type,
             self.combo_type,
             self.label_count,
             self.combo_count,
             btn_generate,
+            btn_save,
+            btn_load,
         ]:
             sidebar_layout.addWidget(widget)
             sidebar_layout.addSpacing(10)
@@ -64,13 +75,13 @@ class GameWindow(QMainWindow):
                                                   stop:0 #34495e, stop:1 #2c3e50);
             }
             QLabel {
-                font-family: "Pixel Game";
+                font-family: "Game Changer";
                 font-size: 24px;
                 color: #f0f0f0;
                 font-weight: bold;
             }
             QComboBox {
-                font-family: "Pixel Game";
+                font-family: "Game Changer";
                 font-size: 22px;
                 padding: 6px 12px;
                 border-radius: 10px;
@@ -94,7 +105,7 @@ class GameWindow(QMainWindow):
                 font-size: 22px;
             }
             QPushButton {
-                font-family: "Pixel Game";
+                font-family: "Game Changer";
                 font-size: 28px;
                 padding: 10px 20px;
                 border-radius: 16px;
@@ -137,6 +148,85 @@ class GameWindow(QMainWindow):
         w = self.view.viewport().width()
         h = self.view.viewport().height()
         self.scene.auto_layout(count, w, h, board_type=board_type)
+
+    def save_layout(self):
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "Save Layout", "", "HipHop Layout (*.hht)"
+        )
+        if not file_path:
+            return
+
+        data = {
+            "board_type": self.combo_type.currentText(),
+            "board_count": (
+                int(self.combo_count.currentText())
+                if self.combo_count.isVisible()
+                else 9
+            ),
+            "boards": [],
+        }
+
+        for item in self.scene.items_list:
+            data["boards"].append(
+                {
+                    "x": item.scenePos().x(),
+                    "y": item.scenePos().y(),
+                    "rotation": item.rotation(),
+                    "flipped": item.flipped,
+                    "face_down_path": item.face_down_image_path,  # نیاز به ذخیره مسیر داریم
+                    "tile_size": item.tile_size,
+                }
+            )
+
+        with open(file_path, "w") as f:
+            json.dump(data, f)
+
+    def load_layout(self):
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Load Layout", "", "HipHop Layout (*.hht)"
+        )
+        if not file_path:
+            return
+
+        try:
+            with open(file_path, "r") as f:
+                data = json.load(f)
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to load layout:\n{e}")
+            return
+
+        board_type = data["board_type"]
+        board_count = data["board_count"]
+        self.combo_type.setCurrentText(board_type)
+        self.update_count_options()
+        if board_type == "4 Core":
+            self.combo_count.setCurrentText(str(board_count))
+
+        w = self.view.viewport().width()
+        h = self.view.viewport().height()
+
+        # صحنه جدید
+        self.scene.clear_scene()
+        self.scene.setSceneRect(0, 0, w, h)
+        self.scene._add_start_label(self.scene.tile_size or 100, h)
+
+        from view.board_item import BoardItem
+        from utils.config import TILE_IMAGE_PATH
+
+        self.scene.items_list = []
+        for b in data["boards"]:
+            item = BoardItem(
+                face_up_path=TILE_IMAGE_PATH,
+                face_down_path=b["face_down_path"],
+                tile_size=b["tile_size"],
+                spacing=0,
+            )
+            item.setPos(b["x"], b["y"])
+            item.setRotation(b["rotation"])
+            item.flipped = b["flipped"]
+            item.setPixmap(item.face_down_image if item.flipped else item.face_up_image)
+            self.scene.addItem(item)
+            self.scene.items_list.append(item)
 
     def eventFilter(self, source, event):
         if source is self.view.viewport() and event.type() == QEvent.Resize:

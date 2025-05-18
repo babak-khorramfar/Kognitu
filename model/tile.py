@@ -18,5 +18,5 @@ class Tile:
         self.rotation = 0
 
     def rotate(self, angle: int):
-        """Rotate tile by given angle (in degrees)."""
+        """Rotate tile by a given angle (in degrees)."""
         self.rotation = (self.rotation + angle) % 360

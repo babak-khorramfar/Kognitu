@@ -1,6 +1,7 @@
 # model/board.py
-from typing import List, Tuple
+
 from .tile import Tile
+from typing import List, Tuple
 
 
 class Board:
@@ -25,9 +26,8 @@ class Board:
         self.tiles.clear()
         for r in range(self.rows):
             for c in range(self.cols):
-                color = self.default_colors[
-                    (r * self.cols + c) % len(self.default_colors)
-                ]
+                idx = (r * self.cols + c) % len(self.default_colors)
+                color = self.default_colors[idx]
                 self.tiles.append(Tile(r, c, color))
 
     def get_tile_at(self, row: int, col: int) -> Tile | None:

@@ -4,76 +4,97 @@ import sys
 from PyQt5.QtWidgets import (
     QApplication,
     QMainWindow,
-    QPushButton,
-    QHBoxLayout,
-    QVBoxLayout,
     QWidget,
-    QSpinBox,
+    QVBoxLayout,
     QLabel,
-    QGraphicsView,
+    QPushButton,
+    QSpacerItem,
+    QSizePolicy,
+    QHBoxLayout,
 )
-from PyQt5.QtCore import QTimer, QEvent, Qt
-from view.board_scene import BoardScene
-from utils.config import TILE_IMAGE_PATH
+from PyQt5.QtCore import Qt
+from view.game_window import GameWindow
 
 
-class MainWindow(QMainWindow):
+class MainLauncherWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Kognitu")
-
-        # نمایش در حالت تمام‌صفحه و قفل resize
+        self.setWindowTitle("HipHop")
         self.showMaximized()
         self.setFixedSize(self.size())
-
-        # ایجاد QGraphicsView برای صحنه
-        self.view = QGraphicsView()
-        self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.scene = BoardScene(tile_image_path=TILE_IMAGE_PATH)
-        self.view.setScene(self.scene)
-
         self._init_ui()
 
     def _init_ui(self):
-        lbl = QLabel("Number of Boards:")
-        self.spin = QSpinBox()
-        self.spin.setRange(1, 100)
-        self.spin.setValue(4)
+        central = QWidget()
+        self.setCentralWidget(central)
 
-        btn = QPushButton("Auto Layout")
-        btn.clicked.connect(self._do_layout)
+        # محتوای وسط لانچر (نام بازی + دکمه‌ها)
+        content_layout = QVBoxLayout()
+        content_layout.setAlignment(Qt.AlignCenter)
 
-        ctl = QHBoxLayout()
-        ctl.addWidget(lbl)
-        ctl.addWidget(self.spin)
-        ctl.addStretch()
-        ctl.addWidget(btn)
+        title = QLabel("🎮 HipHop")
+        title.setAlignment(Qt.AlignCenter)
 
-        lay = QVBoxLayout()
-        lay.addLayout(ctl)
-        lay.addWidget(self.view)
+        btn_manual = QPushButton("Start Manual Game")
+        btn_manual.clicked.connect(self.open_manual_game)
 
-        container = QWidget()
-        container.setLayout(lay)
-        self.setCentralWidget(container)
+        btn_ai = QPushButton("AI Game (Coming Soon)")
+        btn_ai.setEnabled(False)
 
-        # وقتی سایز view تغییر کند، چیدمان دوباره ساخته می‌شود
-        self.view.viewport().installEventFilter(self)
+        btn_settings = QPushButton("Settings")
+        btn_exit = QPushButton("Exit")
+        btn_exit.clicked.connect(self.close)
 
-    def eventFilter(self, source, event):
-        if source is self.view.viewport() and event.type() == QEvent.Resize:
-            QTimer.singleShot(50, self._do_layout)
-        return super().eventFilter(source, event)
+        for btn in [btn_manual, btn_ai, btn_settings, btn_exit]:
+            btn.setFixedHeight(70)
+            content_layout.addWidget(btn)
+            content_layout.addSpacing(20)
 
-    def _do_layout(self):
-        count = self.spin.value()
-        w = self.view.viewport().width()
-        h = self.view.viewport().height()
-        self.scene.auto_layout(count, w, h)
+        content_layout.insertWidget(0, title)
+        content_layout.addSpacing(40)
+
+        # مرکزچینی عمودی با Spacer بالا و پایین
+        outer_layout = QVBoxLayout()
+        outer_layout.addStretch(1)
+        outer_layout.addLayout(content_layout)
+        outer_layout.addStretch(1)
+
+        central.setLayout(outer_layout)
+
+        self.setStyleSheet(
+            """
+            QWidget {
+                background-color: #151c2c;
+            }
+            QPushButton {
+                font-family: "Game Changer";
+                font-size: 28px;
+                padding: 14px 28px;
+                border-radius: 20px;
+                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                  stop:0 #ffb347, stop:1 #ff704d);
+                color: white;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #ff5722;
+            }
+            QLabel {
+                font-size: 80px;
+                font-family: "Game Changer";
+                font-weight: bold;
+                color: #f1c40f;
+            }
+        """
+        )
+
+    def open_manual_game(self):
+        self.game_window = GameWindow()
+        self.game_window.show()
+        self.close()
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = MainWindow()
+    window = MainLauncherWindow()
     sys.exit(app.exec_())
