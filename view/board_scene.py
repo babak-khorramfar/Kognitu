@@ -185,6 +185,55 @@ class BoardScene(QGraphicsScene):
                 self.items_list.append(item)
             return
 
+        if board_type == "9 Full" and count == 9:
+            # ترتیب رنگ‌ها بر اساس موقعیت موردنظر
+            layout_3x3 = [
+                [3, 6, 2],  # ردیف بالا ← زرد، طوسی، قرمز
+                [5, 9, 7],  # وسط ← صورتی، قهوه‌ای، بنفش
+                [1, 8, 4],  # پایین ← آبی، نارنجی، سبز
+            ]
+
+            color_map = {
+                1: "blue",
+                2: "red",
+                3: "yellow",
+                4: "green",
+                5: "pink",
+                6: "gray",
+                7: "purple",
+                8: "orange",
+                9: "brown",
+            }
+
+            start_x = (view_width - (3 * tile_size + 2 * spacing)) / 2
+            start_y = (view_height - (3 * tile_size + 2 * spacing)) / 2
+
+            def snap(x, y):
+                grid = 20
+                return round(x / grid) * grid, round(y / grid) * grid
+
+            for row in range(3):
+                for col in range(3):
+                    color_number = layout_3x3[row][col]
+                    color = color_map[color_number]
+                    face_down_path = f"{color_path}/{color}.png"
+
+                    x = start_x + col * (tile_size + spacing)
+                    y = start_y + row * (tile_size + spacing)
+                    x, y = snap(x, y)
+
+                    item = BoardItem(
+                        face_up_path=self.tile_image_path,
+                        face_down_path=face_down_path,
+                        tile_size=tile_size,
+                        spacing=spacing,
+                    )
+                    item.toggle_flip()  # پیش‌فرض پشت (face-down)
+                    item.setPos(x, y)
+                    self.addItem(item)
+                    self.items_list.append(item)
+            return
+
     def _add_start_label(self, tile_size, scene_height):
         # حذف آیتم‌های قبلی ثابت
         for item in getattr(self, "static_items", []):
