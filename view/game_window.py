@@ -9,21 +9,21 @@ from PyQt5.QtWidgets import (
     QGraphicsView,
     QFrame,
     QFileDialog,
+    QMessageBox,
 )
-from PyQt5.QtCore import Qt, QTimer, QEvent, QPointF, QRectF
+from PyQt5.QtGui import QPixmap, QCursor, QIcon, QFont
+from PyQt5.QtCore import Qt, QTimer, QEvent, QPointF, QRectF, QSize
 import json
 from view.board_scene import BoardScene
 from utils.config import TILE_IMAGE_PATH
-import json
-from PyQt5.QtWidgets import QFileDialog, QMessageBox
+from view.board_item import BoardItem
 
 
 class GameWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Kognitu - Manual Game")
-        self.showMaximized()
-        self.setFixedSize(self.size())
+        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.showFullScreen()
 
         self.view = QGraphicsView()
         self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -50,11 +50,18 @@ class GameWindow(QMainWindow):
         btn_generate = QPushButton("Generate Layout")
         btn_generate.clicked.connect(self._do_layout)
 
+        # پایین سایدبار
         btn_save = QPushButton("💾 Save Layout")
         btn_save.clicked.connect(self.save_layout)
 
         btn_load = QPushButton("📥 Load Layout")
         btn_load.clicked.connect(self.load_layout)
+
+        btn_back = QPushButton("← Back to Launcher")
+        btn_back.clicked.connect(self.back_to_launcher)
+        btn_back.setStyleSheet(
+            "background-color: #95a5a6; color: white; font-weight: bold;"
+        )
 
         for widget in [
             label_type,
@@ -62,11 +69,16 @@ class GameWindow(QMainWindow):
             self.label_count,
             self.combo_count,
             btn_generate,
-            btn_save,
-            btn_load,
         ]:
             sidebar_layout.addWidget(widget)
             sidebar_layout.addSpacing(10)
+
+        sidebar_layout.addStretch(1)
+        sidebar_layout.addSpacing(20)
+        sidebar_layout.addWidget(btn_save)
+        sidebar_layout.addWidget(btn_load)
+        sidebar_layout.addSpacing(10)
+        sidebar_layout.addWidget(btn_back)
 
         sidebar_frame.setStyleSheet(
             """
@@ -131,6 +143,35 @@ class GameWindow(QMainWindow):
         self.update_count_options()
         self.view.viewport().installEventFilter(self)
 
+        # آیکون راهنما
+        self.help_icon = QLabel(self)
+        self.help_icon.setPixmap(
+            QPixmap("resources/images/help.png").scaled(
+                36, 36, Qt.KeepAspectRatio, Qt.SmoothTransformation
+            )
+        )
+        self.help_icon.setToolTip(
+            "<div style='font-family:\"Game Changer\"; font-size:16px;'>"
+            "🖱️ <b>Right-click</b>: Flip board<br>"
+            "🖱️ <b>Double-click</b>: Rotate 45°</div>"
+        )
+        self.help_icon.setStyleSheet(
+            "QToolTip { background-color: #2c3e50; color: white; padding: 6px; border-radius: 5px; }"
+        )
+        self.help_icon.resize(40, 40)
+        self.help_icon.show()
+
+        def reposition_help_icon():
+            x = self.width() - 50
+            y = 10
+            self.help_icon.move(x, y)
+
+        reposition_help_icon()
+        self.resizeEvent = lambda event: (
+            reposition_help_icon(),
+            super().resizeEvent(event),
+        )
+
     def update_count_options(self):
         self.combo_count.clear()
         board_type = self.combo_type.currentText()
@@ -150,12 +191,11 @@ class GameWindow(QMainWindow):
         self.scene.auto_layout(count, w, h, board_type=board_type)
 
     def save_layout(self):
-        file_path, _ = QFileDialog.getSaveFileName(
+        path, _ = QFileDialog.getSaveFileName(
             self, "Save Layout", "", "HipHop Layout (*.hht)"
         )
-        if not file_path:
+        if not path:
             return
-
         data = {
             "board_type": self.combo_type.currentText(),
             "board_count": (
@@ -165,7 +205,6 @@ class GameWindow(QMainWindow):
             ),
             "boards": [],
         }
-
         for item in self.scene.items_list:
             data["boards"].append(
                 {
@@ -173,45 +212,36 @@ class GameWindow(QMainWindow):
                     "y": item.scenePos().y(),
                     "rotation": item.rotation(),
                     "flipped": item.flipped,
-                    "face_down_path": item.face_down_image_path,  # نیاز به ذخیره مسیر داریم
+                    "face_down_path": item.face_down_image_path,
                     "tile_size": item.tile_size,
                 }
             )
-
-        with open(file_path, "w") as f:
+        with open(path, "w") as f:
             json.dump(data, f)
 
     def load_layout(self):
-        file_path, _ = QFileDialog.getOpenFileName(
+        path, _ = QFileDialog.getOpenFileName(
             self, "Load Layout", "", "HipHop Layout (*.hht)"
         )
-        if not file_path:
+        if not path:
             return
-
         try:
-            with open(file_path, "r") as f:
+            with open(path, "r") as f:
                 data = json.load(f)
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to load layout:\n{e}")
+            QMessageBox.critical(self, "Error", f"Load failed:\n{e}")
             return
 
-        board_type = data["board_type"]
-        board_count = data["board_count"]
-        self.combo_type.setCurrentText(board_type)
+        self.combo_type.setCurrentText(data["board_type"])
         self.update_count_options()
-        if board_type == "4 Core":
-            self.combo_count.setCurrentText(str(board_count))
+        if self.combo_count.isVisible():
+            self.combo_count.setCurrentText(str(data["board_count"]))
 
         w = self.view.viewport().width()
         h = self.view.viewport().height()
-
-        # صحنه جدید
         self.scene.clear_scene()
         self.scene.setSceneRect(0, 0, w, h)
         self.scene._add_start_label(self.scene.tile_size or 100, h)
-
-        from view.board_item import BoardItem
-        from utils.config import TILE_IMAGE_PATH
 
         self.scene.items_list = []
         for b in data["boards"]:
@@ -233,9 +263,12 @@ class GameWindow(QMainWindow):
             QTimer.singleShot(50, self._do_layout)
         return super().eventFilter(source, event)
 
-    def closeEvent(self, event):
+    def back_to_launcher(self):
         from view.main_window import MainLauncherWindow
 
         self.launcher = MainLauncherWindow()
         self.launcher.show()
-        event.accept()
+        self.close()
+
+    def closeEvent(self, event):
+        self.back_to_launcher()
