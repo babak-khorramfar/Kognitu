@@ -11,8 +11,8 @@ from PyQt5.QtWidgets import (
     QFileDialog,
     QMessageBox,
 )
-from PyQt5.QtGui import QPixmap, QCursor, QIcon, QFont
-from PyQt5.QtCore import Qt, QTimer, QEvent, QPointF, QRectF, QSize
+from PyQt5.QtGui import QPixmap, QCursor
+from PyQt5.QtCore import Qt, QTimer, QEvent, QPointF
 import json
 from view.board_scene import BoardScene
 from utils.config import TILE_IMAGE_PATH
@@ -50,7 +50,6 @@ class GameWindow(QMainWindow):
         btn_generate = QPushButton("Generate Layout")
         btn_generate.clicked.connect(self._do_layout)
 
-        # پایین سایدبار
         btn_save = QPushButton("💾 Save Layout")
         btn_save.clicked.connect(self.save_layout)
 
@@ -143,7 +142,6 @@ class GameWindow(QMainWindow):
         self.update_count_options()
         self.view.viewport().installEventFilter(self)
 
-        # آیکون راهنما
         self.help_icon = QLabel(self)
         self.help_icon.setPixmap(
             QPixmap("resources/images/help.png").scaled(
@@ -174,8 +172,7 @@ class GameWindow(QMainWindow):
 
     def update_count_options(self):
         self.combo_count.clear()
-        board_type = self.combo_type.currentText()
-        if board_type == "4 Core":
+        if self.combo_type.currentText() == "4 Core":
             self.combo_count.addItems(["4", "8", "12"])
             self.label_count.show()
             self.combo_count.show()
@@ -206,10 +203,11 @@ class GameWindow(QMainWindow):
             "boards": [],
         }
         for item in self.scene.items_list:
+            center = item.mapToScene(item.boundingRect().center())
             data["boards"].append(
                 {
-                    "x": item.scenePos().x(),
-                    "y": item.scenePos().y(),
+                    "x": center.x(),
+                    "y": center.y(),
                     "rotation": item.rotation(),
                     "flipped": item.flipped,
                     "face_down_path": item.face_down_image_path,
@@ -251,10 +249,13 @@ class GameWindow(QMainWindow):
                 tile_size=b["tile_size"],
                 spacing=0,
             )
-            item.setPos(b["x"], b["y"])
             item.setRotation(b["rotation"])
             item.flipped = b["flipped"]
             item.setPixmap(item.face_down_image if item.flipped else item.face_up_image)
+            # تعیین مرکز تخته در صحنه
+            center = QPointF(b["x"], b["y"])
+            offset = item.boundingRect().center()
+            item.setPos(center - offset)
             self.scene.addItem(item)
             self.scene.items_list.append(item)
 
