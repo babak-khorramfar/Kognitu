@@ -1,19 +1,21 @@
-# view/main_window.py
-
 import sys
 from PyQt5.QtWidgets import (
     QApplication,
     QMainWindow,
     QWidget,
-    QVBoxLayout,
     QLabel,
     QPushButton,
-    QSpacerItem,
-    QSizePolicy,
+    QVBoxLayout,
     QHBoxLayout,
+    QSizePolicy,
+    QGraphicsView,
+    QGraphicsScene,
 )
+from PyQt5.QtGui import QPixmap, QFont
 from PyQt5.QtCore import Qt
 from view.game_window import GameWindow
+from view.board_item import BoardItem
+from utils.config import TILE_IMAGE_PATH
 
 
 class MainLauncherWindow(QMainWindow):
@@ -28,62 +30,98 @@ class MainLauncherWindow(QMainWindow):
         central = QWidget()
         self.setCentralWidget(central)
 
-        # محتوای وسط لانچر (نام بازی + دکمه‌ها)
-        content_layout = QVBoxLayout()
-        content_layout.setAlignment(Qt.AlignCenter)
+        # 🔹 لوگو بالا
+        logo_label = QLabel()
+        logo_pixmap = QPixmap("resources/images/logo.png").scaledToWidth(
+            480, Qt.SmoothTransformation
+        )
+        logo_label.setPixmap(logo_pixmap)
+        logo_label.setAlignment(Qt.AlignCenter)
 
-        title = QLabel("🎮 HipHop")
-        title.setAlignment(Qt.AlignCenter)
+        # 🔹 تخته راهنما در QGraphicsView (با یک تخته قابل تعامل)
+        view = QGraphicsView()
+        scene = QGraphicsScene(0, 0, 200, 200)
+        view.setScene(scene)
+        view.setFixedSize(200, 200)
+        view.setStyleSheet("background: transparent; border: none;")
+        view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
-        btn_manual = QPushButton("Start Manual Game")
-        btn_manual.clicked.connect(self.open_manual_game)
+        board = BoardItem(
+            face_up_path=TILE_IMAGE_PATH,
+            face_down_path="resources/images/backs/4colors/blue.png",
+            tile_size=140,
+            spacing=0,
+        )
+        board.setPos(30, 30)
+        scene.addItem(board)
 
-        btn_ai = QPushButton("AI Game (Coming Soon)")
-        btn_ai.setEnabled(False)
+        # 🔹 راهنمای چرخش و فلیپ
+        label = QLabel("🖱️ Double-click to rotate\n🖱️ Right-click to flip")
+        label.setFont(QFont("Arial", 18))
+        label.setStyleSheet("color: #111;")
 
-        btn_settings = QPushButton("Settings")
-        btn_exit = QPushButton("Exit")
-        btn_exit.clicked.connect(self.close)
+        guide_row = QHBoxLayout()
+        guide_row.addWidget(view)
+        guide_row.addSpacing(20)
+        guide_row.addWidget(label)
+        guide_row.addStretch(1)
 
-        for btn in [btn_manual, btn_ai, btn_settings, btn_exit]:
-            btn.setFixedHeight(70)
-            content_layout.addWidget(btn)
-            content_layout.addSpacing(20)
+        guide_column = QVBoxLayout()
+        guide_column.addLayout(guide_row)
+        guide_column.addStretch(1)
+        guide_column.setContentsMargins(40, 0, 0, 0)
 
-        content_layout.insertWidget(0, title)
-        content_layout.addSpacing(40)
+        # 🔹 دکمه‌ها
+        button_layout = QVBoxLayout()
+        button_layout.setSpacing(25)
+        button_layout.setContentsMargins(0, 0, 40, 0)
+        button_layout.setAlignment(Qt.AlignTop)
 
-        # مرکزچینی عمودی با Spacer بالا و پایین
-        outer_layout = QVBoxLayout()
-        outer_layout.addStretch(1)
-        outer_layout.addLayout(content_layout)
-        outer_layout.addStretch(1)
+        for text, slot in [
+            ("Start Manual Game", self.open_manual_game),
+            ("AI Game (Coming Soon)", None),
+            ("Settings", None),
+            ("Exit", self.close),
+        ]:
+            btn = QPushButton(text)
+            btn.setFixedHeight(60)
+            btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            if slot:
+                btn.clicked.connect(slot)
+            else:
+                btn.setEnabled(False)
+            button_layout.addWidget(btn)
 
-        central.setLayout(outer_layout)
+        # 🔹 ترکیب پایین
+        bottom_layout = QHBoxLayout()
+        bottom_layout.addLayout(guide_column, 1)
+        bottom_layout.addLayout(button_layout, 1)
 
+        # 🔹 چیدمان کلی صفحه
+        main_layout = QVBoxLayout()
+        main_layout.addWidget(logo_label)
+        main_layout.addSpacing(30)
+        main_layout.addLayout(bottom_layout)
+
+        central.setLayout(main_layout)
+
+        # 🔹 استایل کلی
         self.setStyleSheet(
             """
-            QWidget {
-                background-color: #151c2c;
-            }
+            QWidget { background-color: white; }
             QPushButton {
                 font-family: "Game Changer";
                 font-size: 28px;
                 padding: 14px 28px;
                 border-radius: 20px;
                 background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                                  stop:0 #ffb347, stop:1 #ff704d);
+                                                  stop:0 #ffb347, stop:1 #ff704d);
                 color: white;
                 font-weight: bold;
             }
             QPushButton:hover {
                 background-color: #ff5722;
-            }
-            QLabel {
-                font-size: 80px;
-                font-family: "Game Changer";
-                font-weight: bold;
-                color: #f1c40f;
             }
         """
         )
@@ -97,4 +135,5 @@ class MainLauncherWindow(QMainWindow):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainLauncherWindow()
+    window.show()
     sys.exit(app.exec_())
