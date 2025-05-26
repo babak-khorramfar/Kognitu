@@ -74,7 +74,9 @@ class BoardScene(QGraphicsScene):
         if board_type == "4 Core" and count == 8:
             top_y = view_height / 2 - tile_size - spacing / 2
             bottom_y = view_height / 2 + spacing / 2
-            start_x = (view_width - (4 * tile_size + 3 * spacing)) / 2
+
+            # استفاده از restricted_x به‌عنوان مرجع چپ چیدمان
+            start_x = self.restricted_x + spacing
 
             for i in range(4):
                 color = colors[i]
@@ -87,10 +89,7 @@ class BoardScene(QGraphicsScene):
                         tile_size=tile_size,
                         spacing=spacing,
                     )
-                    grid_size = 20
-                    snapped_x = round(x / grid_size) * grid_size
-                    snapped_y = round(y / grid_size) * grid_size
-                    item.setPos(snapped_x, snapped_y)
+                    item.setPos(x, y)
                     self.addItem(item)
                     self.items_list.append(item)
             return
@@ -126,63 +125,52 @@ class BoardScene(QGraphicsScene):
             return
 
         if board_type == "4 Core" and count == 12:
-            # محاسبه فضای موجود از بعد از restricted_x
-            available_width = view_width - self.restricted_x - 20  # 20px حاشیه امن
+            tile_size *= 0.8
+            spacing = tile_size * 0.3
+            self.tile_size = tile_size
 
-            max_tile_size = (available_width - 5 * spacing) / 6
-            if tile_size > max_tile_size:
-                tile_size = int(max_tile_size)
-                spacing = tile_size * (SPACING_FACTOR - 1)
+            color_order = ["yellow", "red", "blue", "green"]
 
-            # بازمحاسبه مختصات افقی از چپ به راست
-            total_w = 6 * tile_size + 5 * spacing
-            start_x = self.restricted_x + (available_width - total_w) / 2 + 20
-            top_y = view_height / 2 - tile_size - spacing / 2
-            bottom_y = view_height / 2 + spacing / 2
+            block_cols = 3
+            block_rows = 1
+            block_w = 2 * tile_size + spacing
+            block_h = 2 * tile_size + spacing
 
-            # بالا (چپ به راست): 1 2 3 4 1 2
-            top_colors = [
-                colors[0],
-                colors[1],
-                colors[2],
-                colors[3],
-                colors[0],
-                colors[1],
-            ]
-            for i, color in enumerate(top_colors):
-                x = start_x + i * (tile_size + spacing)
-                face_down_path = f"{color_path}/{color}.png"
-                item = BoardItem(
-                    face_up_path=self.tile_image_path,
-                    face_down_path=face_down_path,
-                    tile_size=tile_size,
-                    spacing=spacing,
-                )
-                item.setPos(x, top_y)
-                self.addItem(item)
-                self.items_list.append(item)
+            total_w = block_cols * block_w + (block_cols - 1) * spacing
+            total_h = block_rows * block_h + (block_rows - 1) * spacing
 
-            # پایین (راست به چپ): 4 3 2 1 4 3
-            bottom_colors = [
-                colors[2],
-                colors[3],
-                colors[0],
-                colors[1],
-                colors[2],
-                colors[3],
-            ]
-            for i, color in enumerate(bottom_colors):
-                x = start_x + (5 - i) * (tile_size + spacing)
-                face_down_path = f"{color_path}/{color}.png"
-                item = BoardItem(
-                    face_up_path=self.tile_image_path,
-                    face_down_path=face_down_path,
-                    tile_size=tile_size,
-                    spacing=spacing,
-                )
-                item.setPos(x, bottom_y)
-                self.addItem(item)
-                self.items_list.append(item)
+            start_x = max(
+                self.restricted_x + spacing,
+                (view_width - total_w) / 2,
+            )
+            start_y = (view_height - total_h) / 2
+
+            def add_block(origin_x, origin_y):
+                positions = [
+                    (0, 0),  # بالا چپ = زرد
+                    (0, 1),  # بالا راست = قرمز
+                    (1, 0),  # پایین چپ = آبی
+                    (1, 1),  # پایین راست = سبز
+                ]
+                for idx, (r, c) in enumerate(positions):
+                    color = color_order[idx]
+                    face_down_path = f"{color_path}/{color}.png"
+                    item = BoardItem(
+                        face_up_path=self.tile_image_path,
+                        face_down_path=face_down_path,
+                        tile_size=tile_size,
+                        spacing=spacing,
+                    )
+                    item.setPos(origin_x + c * tile_size, origin_y + r * tile_size)
+                    self.addItem(item)
+                    self.items_list.append(item)
+
+            for row in range(block_rows):  # 0 و 1 (بالا و پایین)
+                for col in range(block_cols):  # 0 تا 2 (سه ستون)
+                    x = start_x + col * (block_w + spacing)
+                    y = start_y + row * (block_h + spacing)
+                    add_block(x, y)
+
             return
 
         if board_type == "9 Full" and count == 9:
