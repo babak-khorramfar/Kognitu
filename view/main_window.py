@@ -52,7 +52,7 @@ class MainLauncherWindow(QMainWindow):
         # 🔹 لوگو
         logo_label = QLabel()
         logo_pixmap = QPixmap("resources/images/logo.png").scaledToWidth(
-            500, Qt.SmoothTransformation
+            600, Qt.SmoothTransformation
         )
         logo_label.setPixmap(logo_pixmap)
         logo_label.setAlignment(Qt.AlignCenter)
@@ -63,15 +63,15 @@ class MainLauncherWindow(QMainWindow):
         button_layout.setAlignment(Qt.AlignCenter)
 
         for text, slot, icon in [
-            ("Start Manual Game", self.open_manual_game, ""),
+            ("Start Game", self.open_manual_game, ""),
             # ("AI Game (Coming Soon)", None, "🤖"),
             # ("Settings", None, "⚙️"),
-            ("Exit", self.close, "❌"),
+            ("Exit", self.close, ""),
         ]:
             btn = QPushButton(f"{icon} {text}")
             btn.setFixedHeight(60)
             btn.setFixedWidth(400)
-            btn.setFont(QFont("Arial", 20))
+            btn.setFont(QFont("Arial", 18))
             btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
             btn.setStyleSheet(
                 """
@@ -130,7 +130,7 @@ class MainLauncherWindow(QMainWindow):
         main_layout.addLayout(button_layout)
         main_layout.addSpacing(20)  # ⬅ فاصله کمتر برای بالا آوردن راهنما
         main_layout.addLayout(guide_row)
-        main_layout.addSpacing(100)  # ⬅ فاصله پایین‌تر برای جلوگیری از چسبیدن به لبه
+        main_layout.addSpacing(300)  # ⬅ فاصله پایین‌تر برای جلوگیری از چسبیدن به لبه
 
         central.setLayout(main_layout)
 

@@ -145,23 +145,24 @@ class GameWindow(QMainWindow):
         self.help_icon = QLabel(self)
         self.help_icon.setPixmap(
             QPixmap("resources/images/help.png").scaled(
-                36, 36, Qt.KeepAspectRatio, Qt.SmoothTransformation
+                58, 58, Qt.KeepAspectRatio, Qt.SmoothTransformation
             )
         )
         self.help_icon.setToolTip(
-            "<div style='font-family:\"Game Changer\"; font-size:16px;'>"
-            "🖱️ <b>Right-click</b>: Flip board<br>"
-            "🖱️ <b>Double-click</b>: Rotate 45°</div>"
+            "<div style='font-family:\"Arial\"; font-size:18px;'>"
+            "🖱️ <b>Right click</b>: Flip board<br>"
+            "🖱️ <b>Double click</b>: Rotate 45°<br>"
+            "🖱️ <b>Drag & Drop</b>: Move Board</div>"
         )
         self.help_icon.setStyleSheet(
             "QToolTip { background-color: #2c3e50; color: white; padding: 6px; border-radius: 5px; }"
         )
-        self.help_icon.resize(40, 40)
+        self.help_icon.resize(58, 58)
         self.help_icon.show()
 
         def reposition_help_icon():
-            x = self.width() - 50
-            y = 10
+            x = self.width() - 90
+            y = 25
             self.help_icon.move(x, y)
 
         reposition_help_icon()
