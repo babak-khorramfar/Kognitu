@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import (
     QGraphicsScene,
 )
 from PyQt5.QtGui import QPixmap, QFont
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 from view.game_window import GameWindow
 from view.board_item import BoardItem
 from utils.config import TILE_IMAGE_PATH
@@ -22,23 +22,78 @@ class MainLauncherWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("HipHop")
-        self.showMaximized()
-        self.setFixedSize(self.size())
+
+        screen = QApplication.primaryScreen()
+        rect = screen.geometry()
+        self.setGeometry(rect)
+        self.setFixedSize(rect.width(), rect.height())
+
         self._init_ui()
 
     def _init_ui(self):
-        central = QWidget()
+        # 🔹 پس‌زمینه با QLabel به‌صورت پوششی
+        bg_label = QLabel(self)
+        bg_label.setPixmap(
+            QPixmap("resources/images/bg.jpg").scaled(
+                self.width(),
+                self.height(),
+                Qt.KeepAspectRatioByExpanding,
+                Qt.SmoothTransformation,
+            )
+        )
+        bg_label.setGeometry(0, 0, self.width(), self.height())
+        bg_label.lower()
+
+        # 🔹 مرکز اصلی برنامه
+        central = QWidget(self)
+        central.setStyleSheet("background: transparent;")
         self.setCentralWidget(central)
 
-        # 🔹 لوگو بالا
+        # 🔹 لوگو
         logo_label = QLabel()
         logo_pixmap = QPixmap("resources/images/logo.png").scaledToWidth(
-            480, Qt.SmoothTransformation
+            500, Qt.SmoothTransformation
         )
         logo_label.setPixmap(logo_pixmap)
         logo_label.setAlignment(Qt.AlignCenter)
 
-        # 🔹 تخته راهنما در QGraphicsView (با یک تخته قابل تعامل)
+        # 🔹 دکمه‌ها
+        button_layout = QVBoxLayout()
+        button_layout.setSpacing(20)
+        button_layout.setAlignment(Qt.AlignCenter)
+
+        for text, slot, icon in [
+            ("Start Manual Game", self.open_manual_game, ""),
+            # ("AI Game (Coming Soon)", None, "🤖"),
+            # ("Settings", None, "⚙️"),
+            ("Exit", self.close, "❌"),
+        ]:
+            btn = QPushButton(f"{icon} {text}")
+            btn.setFixedHeight(60)
+            btn.setFixedWidth(400)
+            btn.setFont(QFont("Arial", 20))
+            btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+            btn.setStyleSheet(
+                """
+                QPushButton {
+                    border-radius: 20px;
+                    font-weight: bold;
+                    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                        stop:0 #fcd34d, stop:1 #f97316);
+                    color: white;
+                }
+                QPushButton:hover {
+                    background-color: #ff7f50;
+                }
+            """
+            )
+            if slot:
+                btn.clicked.connect(slot)
+            else:
+                btn.setEnabled(False)
+            button_layout.addWidget(btn)
+
+        # 🔹 تخته راهنما
         view = QGraphicsView()
         scene = QGraphicsScene(0, 0, 200, 200)
         view.setScene(scene)
@@ -56,75 +111,43 @@ class MainLauncherWindow(QMainWindow):
         board.setPos(30, 30)
         scene.addItem(board)
 
-        # 🔹 راهنمای چرخش و فلیپ
-        label = QLabel("🖱️ Double-click to rotate\n🖱️ Right-click to flip")
-        label.setFont(QFont("Arial", 18))
-        label.setStyleSheet("color: #111;")
+        guide_label = QLabel("🖱️ Double-click to rotate\n🖱️ Right-click to flip")
+        guide_label.setFont(QFont("Arial", 18))
+        guide_label.setStyleSheet("color: #111;")
 
         guide_row = QHBoxLayout()
+        guide_row.addSpacing(50)
         guide_row.addWidget(view)
         guide_row.addSpacing(20)
-        guide_row.addWidget(label)
-        guide_row.addStretch(1)
+        guide_row.addWidget(guide_label)
+        guide_row.addStretch()
 
-        guide_column = QVBoxLayout()
-        guide_column.addLayout(guide_row)
-        guide_column.addStretch(1)
-        guide_column.setContentsMargins(40, 0, 0, 0)
-
-        # 🔹 دکمه‌ها
-        button_layout = QVBoxLayout()
-        button_layout.setSpacing(25)
-        button_layout.setContentsMargins(0, 0, 40, 0)
-        button_layout.setAlignment(Qt.AlignTop)
-
-        for text, slot in [
-            ("Start Manual Game", self.open_manual_game),
-            ("AI Game (Coming Soon)", None),
-            ("Settings", None),
-            ("Exit", self.close),
-        ]:
-            btn = QPushButton(text)
-            btn.setFixedHeight(60)
-            btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            if slot:
-                btn.clicked.connect(slot)
-            else:
-                btn.setEnabled(False)
-            button_layout.addWidget(btn)
-
-        # 🔹 ترکیب پایین
-        bottom_layout = QHBoxLayout()
-        bottom_layout.addLayout(guide_column, 1)
-        bottom_layout.addLayout(button_layout, 1)
-
-        # 🔹 چیدمان کلی صفحه
+        # 🔹 چیدمان نهایی
         main_layout = QVBoxLayout()
-        main_layout.addWidget(logo_label)
         main_layout.addSpacing(30)
-        main_layout.addLayout(bottom_layout)
+        main_layout.addWidget(logo_label, alignment=Qt.AlignCenter)
+        main_layout.addSpacing(20)
+        main_layout.addLayout(button_layout)
+        main_layout.addSpacing(20)  # ⬅ فاصله کمتر برای بالا آوردن راهنما
+        main_layout.addLayout(guide_row)
+        main_layout.addSpacing(100)  # ⬅ فاصله پایین‌تر برای جلوگیری از چسبیدن به لبه
 
         central.setLayout(main_layout)
 
-        # 🔹 استایل کلی
-        self.setStyleSheet(
-            """
-            QWidget { background-color: white; }
-            QPushButton {
-                font-family: "Game Changer";
-                font-size: 28px;
-                padding: 14px 28px;
-                border-radius: 20px;
-                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                                                  stop:0 #ffb347, stop:1 #ff704d);
-                color: white;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #ff5722;
-            }
-        """
-        )
+        # تأخیر کوتاه برای اطمینان از اعمال سایز صحیح
+        QTimer.singleShot(100, self._adjust_background)
+
+    def _adjust_background(self):
+        bg_label = self.findChild(QLabel)
+        if bg_label:
+            bg_label.setPixmap(
+                QPixmap("resources/images/bg.jpg").scaled(
+                    self.width(),
+                    self.height(),
+                    Qt.KeepAspectRatioByExpanding,
+                    Qt.SmoothTransformation,
+                )
+            )
 
     def open_manual_game(self):
         self.game_window = GameWindow()
