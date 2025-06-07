@@ -56,10 +56,27 @@ class GameWindow(QMainWindow):
         btn_load = QPushButton("📥 Load Layout")
         btn_load.clicked.connect(self.load_layout)
 
-        btn_back = QPushButton("← Back to Launcher")
+        btn_back = QPushButton("Back to Launcher")
         btn_back.clicked.connect(self.back_to_launcher)
         btn_back.setStyleSheet(
-            "background-color: #95a5a6; color: white; font-weight: Regular;"
+            """
+            QPushButton {
+                font-family: "Comic Neue";
+                font-size: 18px;
+                padding: 10px 18px;
+                border-radius: 14px;
+                background-color: #ff0057;
+                color: white;
+                border: 2px solid white;
+                font-weight: regular;
+                border-bottom: 4px solid #a80038;
+            }
+            QPushButton:hover {
+                background-color: #b2003a;
+                border-bottom: 2px solid #b2003a;
+                border-top: 4px solid #ff0057;
+            }
+            """
         )
 
         for widget in [
@@ -83,7 +100,7 @@ class GameWindow(QMainWindow):
             """
             QFrame {
                 background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                                                  stop:0 #34495e, stop:1 #2c3e50);
+                    stop:0 #1b2335, stop:1 #292d3e);
             }
             QLabel {
                 font-family: "ComicNeue";
@@ -120,13 +137,17 @@ class GameWindow(QMainWindow):
                 font-size: 22px;
                 padding: 10px 20px;
                 border-radius: 16px;
-                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                                  stop:0 #fcd34d, stop:1 #f97316);
+                background-color: #2196f3;    /* آبی */
                 color: white;
+                border: 2px solid white;
                 font-weight: Regular;
+                box-shadow: 0px 4px 16px 0px #1565c060;
+                /* شبیه سایه برای حالت برجسته */
             }
             QPushButton:hover {
-                background-color: #f59e0b;
+                background-color: #1565c0;
+                box-shadow: none;
+                border: 2px solid #2196f3;
             }
         """
         )
