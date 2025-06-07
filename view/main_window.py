@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import (
     QSizePolicy,
     QGraphicsView,
     QGraphicsScene,
+    QFrame,
 )
 from PyQt5.QtGui import QPixmap, QFont
 from PyQt5.QtCore import Qt, QTimer
@@ -31,7 +32,7 @@ class MainLauncherWindow(QMainWindow):
         self._init_ui()
 
     def _init_ui(self):
-        # 🔹 پس‌زمینه با QLabel به‌صورت پوششی
+        # پس‌زمینه
         bg_label = QLabel(self)
         bg_label.setPixmap(
             QPixmap("resources/images/bg.jpg").scaled(
@@ -44,12 +45,12 @@ class MainLauncherWindow(QMainWindow):
         bg_label.setGeometry(0, 0, self.width(), self.height())
         bg_label.lower()
 
-        # 🔹 مرکز اصلی برنامه
+        # مرکز برنامه
         central = QWidget(self)
         central.setStyleSheet("background: transparent;")
         self.setCentralWidget(central)
 
-        # 🔹 لوگو
+        # لوگو
         logo_label = QLabel()
         logo_pixmap = QPixmap("resources/images/logo.png").scaledToWidth(
             600, Qt.SmoothTransformation
@@ -57,18 +58,15 @@ class MainLauncherWindow(QMainWindow):
         logo_label.setPixmap(logo_pixmap)
         logo_label.setAlignment(Qt.AlignCenter)
 
-        # 🔹 دکمه‌ها
+        # دکمه‌ها
         button_layout = QVBoxLayout()
         button_layout.setSpacing(20)
         button_layout.setAlignment(Qt.AlignCenter)
-
-        for text, slot, icon in [
-            ("Start Game", self.open_manual_game, ""),
-            # ("AI Game (Coming Soon)", None, "🤖"),
-            # ("Settings", None, "⚙️"),
-            ("Exit", self.close, ""),
+        for text, slot in [
+            ("Start Game", self.open_manual_game),
+            ("Exit", self.close),
         ]:
-            btn = QPushButton(f"{icon} {text}")
+            btn = QPushButton(text)
             btn.setFixedHeight(60)
             btn.setFixedWidth(400)
             btn.setFont(QFont("Arial", 18))
@@ -87,17 +85,15 @@ class MainLauncherWindow(QMainWindow):
                 }
             """
             )
-            if slot:
-                btn.clicked.connect(slot)
-            else:
-                btn.setEnabled(False)
+            btn.clicked.connect(slot)
             button_layout.addWidget(btn)
 
-        # 🔹 تخته راهنما
+        # --- راهنما ---
+
         view = QGraphicsView()
-        scene = QGraphicsScene(0, 0, 200, 200)
+        scene = QGraphicsScene(0, 0, 250, 250)
         view.setScene(scene)
-        view.setFixedSize(200, 200)
+        view.setFixedSize(250, 250)
         view.setStyleSheet("background: transparent; border: none;")
         view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -105,36 +101,66 @@ class MainLauncherWindow(QMainWindow):
         board = BoardItem(
             face_up_path=TILE_IMAGE_PATH,
             face_down_path="resources/images/backs/4colors/blue.png",
-            tile_size=140,
+            tile_size=170,
             spacing=0,
         )
-        board.setPos(30, 30)
+        board.setPos(40, 30)
         scene.addItem(board)
 
-        guide_label = QLabel("🖱️ Double-click to rotate\n🖱️ Right-click to flip")
-        guide_label.setFont(QFont("Arial", 18))
-        guide_label.setStyleSheet("color: #111;")
+        rotate_icon = QLabel()
+        rotate_icon.setPixmap(
+            QPixmap("resources/images/rotate.png").scaled(
+                120, 120, Qt.KeepAspectRatio, Qt.SmoothTransformation
+            )
+        )
+        flip_icon = QLabel()
+        flip_icon.setPixmap(
+            QPixmap("resources/images/flip.png").scaled(
+                120, 120, Qt.KeepAspectRatio, Qt.SmoothTransformation
+            )
+        )
 
-        guide_row = QHBoxLayout()
-        guide_row.addSpacing(50)
-        guide_row.addWidget(view)
-        guide_row.addSpacing(20)
-        guide_row.addWidget(guide_label)
-        guide_row.addStretch()
+        icons_layout = QVBoxLayout()
+        icons_layout.setSpacing(12)
+        icons_layout.addWidget(rotate_icon)
+        icons_layout.addWidget(flip_icon)
+        icons_layout.addStretch(1)
 
-        # 🔹 چیدمان نهایی
+        guide_layout = QHBoxLayout()
+        guide_layout.setSpacing(30)
+        guide_layout.addWidget(view)
+        guide_layout.addLayout(icons_layout)
+
+        # فریم راهنما (کادر شیشه‌ای)
+        guide_frame = QFrame()
+        guide_frame.setLayout(guide_layout)
+        guide_frame.setStyleSheet(
+            """
+            QFrame {
+                background-color: rgba(255,255,255,0.65);  /* نیمه شفاف */
+                border-radius: 32px;
+                border: 2px solid rgba(120,120,120,0.18);
+                /* برای شبیه‌سازی shadow میتونی کمی border کمرنگ‌تر بذاری */
+            }
+        """
+        )
+        guide_frame.setFixedHeight(270)  # میتونی با توجه به سایز کل تنظیم کنی
+        guide_frame.setFixedWidth(420)  # یا بزرگتر
+
+        # وسط‌چینی کل محتوا با Spacer
         main_layout = QVBoxLayout()
-        main_layout.addSpacing(30)
-        main_layout.addWidget(logo_label, alignment=Qt.AlignCenter)
-        main_layout.addSpacing(20)
+        main_layout.addStretch(1)
+        main_layout.addWidget(logo_label, alignment=Qt.AlignHCenter)
+        main_layout.addWidget(guide_frame, alignment=Qt.AlignLeft | Qt.AlignBottom)
+        main_layout.addSpacing(12)
         main_layout.addLayout(button_layout)
-        main_layout.addSpacing(20)  # ⬅ فاصله کمتر برای بالا آوردن راهنما
-        main_layout.addLayout(guide_row)
-        main_layout.addSpacing(300)  # ⬅ فاصله پایین‌تر برای جلوگیری از چسبیدن به لبه
+        main_layout.addSpacing(30)
+        main_layout.addLayout(guide_layout)
+        main_layout.addStretch(2)  # <-- راهنما پایین‌تر ولی داخل صفحه
 
         central.setLayout(main_layout)
 
-        # تأخیر کوتاه برای اطمینان از اعمال سایز صحیح
+        # بک‌گراند ری‌سایز
         QTimer.singleShot(100, self._adjust_background)
 
     def _adjust_background(self):
