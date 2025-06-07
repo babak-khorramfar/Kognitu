@@ -69,13 +69,13 @@ class MainLauncherWindow(QMainWindow):
             btn = QPushButton(text)
             btn.setFixedHeight(60)
             btn.setFixedWidth(400)
-            btn.setFont(QFont("Arial", 18))
+            btn.setFont(QFont("ComicNeue", 18))
             btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
             btn.setStyleSheet(
                 """
                 QPushButton {
                     border-radius: 20px;
-                    font-weight: bold;
+                    font-weight: Regular;
                     background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                         stop:0 #fcd34d, stop:1 #f97316);
                     color: white;

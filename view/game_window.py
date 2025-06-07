@@ -59,7 +59,7 @@ class GameWindow(QMainWindow):
         btn_back = QPushButton("← Back to Launcher")
         btn_back.clicked.connect(self.back_to_launcher)
         btn_back.setStyleSheet(
-            "background-color: #95a5a6; color: white; font-weight: bold;"
+            "background-color: #95a5a6; color: white; font-weight: Regular;"
         )
 
         for widget in [
@@ -86,14 +86,14 @@ class GameWindow(QMainWindow):
                                                   stop:0 #34495e, stop:1 #2c3e50);
             }
             QLabel {
-                font-family: "Game Changer";
-                font-size: 24px;
+                font-family: "ComicNeue";
+                font-size: 16px;
                 color: #f0f0f0;
-                font-weight: bold;
+                font-weight: Regular;
             }
             QComboBox {
-                font-family: "Game Changer";
-                font-size: 22px;
+                font-family: "ComicNeue";
+                font-size: 16px;
                 padding: 6px 12px;
                 border-radius: 10px;
                 background-color: #ecf0f1;
@@ -116,14 +116,14 @@ class GameWindow(QMainWindow):
                 font-size: 22px;
             }
             QPushButton {
-                font-family: "Game Changer";
-                font-size: 28px;
+                font-family: "ComicNeue";
+                font-size: 22px;
                 padding: 10px 20px;
                 border-radius: 16px;
                 background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                                   stop:0 #fcd34d, stop:1 #f97316);
                 color: white;
-                font-weight: bold;
+                font-weight: Regular;
             }
             QPushButton:hover {
                 background-color: #f59e0b;
@@ -149,7 +149,7 @@ class GameWindow(QMainWindow):
             )
         )
         self.help_icon.setToolTip(
-            "<div style='font-family:\"Arial\"; font-size:18px;'>"
+            "<div style='font-family:\"ComicNeue\"; font-size:16px;'>"
             "🖱️ <b>Right click</b>: Flip board<br>"
             "🖱️ <b>Double click</b>: Rotate 45°<br>"
             "🖱️ <b>Drag & Drop</b>: Move Board</div>"
