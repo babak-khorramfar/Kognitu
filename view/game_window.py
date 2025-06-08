@@ -49,18 +49,23 @@ class GameWindow(QMainWindow):
 
         btn_generate = QPushButton("Generate Layout")
         btn_generate.clicked.connect(self._do_layout)
+        btn_generate.setCursor(Qt.PointingHandCursor)
 
         btn_save = QPushButton("💾 Save Layout")
         btn_save.clicked.connect(self.save_layout)
+        btn_save.setCursor(Qt.PointingHandCursor)
 
         btn_load = QPushButton("📥 Load Layout")
         btn_load.clicked.connect(self.load_layout)
+        btn_load.setCursor(Qt.PointingHandCursor)
 
         btn_back = QPushButton("Back to Launcher")
         btn_back.clicked.connect(self.back_to_launcher)
+        btn_back.setCursor(Qt.PointingHandCursor)
         btn_back.setStyleSheet(
             """
             QPushButton {
+                cursor: pointer;
                 font-family: "Comic Neue";
                 font-size: 18px;
                 padding: 10px 18px;
@@ -133,6 +138,7 @@ class GameWindow(QMainWindow):
                 font-size: 22px;
             }
             QPushButton {
+                cursor: pointer;
                 font-family: "ComicNeue";
                 font-size: 22px;
                 padding: 10px 20px;

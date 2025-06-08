@@ -31,6 +31,8 @@ class BoardItem(QGraphicsPixmapItem):
         self._last_pos = QPointF()
         self._last_rotation = 0
 
+        self.setCursor(Qt.PointingHandCursor)
+
     def mousePressEvent(self, event):
         if event.button() == Qt.RightButton:
             self.toggle_flip()
