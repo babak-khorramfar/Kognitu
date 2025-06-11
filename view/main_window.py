@@ -67,6 +67,7 @@ class MainLauncherWindow(QMainWindow):
             ("Exit", self.close),
         ]:
             btn = QPushButton(text)
+            btn.setCursor(Qt.PointingHandCursor)
             btn.setFixedHeight(60)
             btn.setFixedWidth(400)
             btn.setFont(QFont("ComicNeue", 18))
@@ -74,14 +75,19 @@ class MainLauncherWindow(QMainWindow):
             btn.setStyleSheet(
                 """
                 QPushButton {
+                    cursor: pointer;
                     border-radius: 20px;
                     font-weight: Regular;
-                    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 #fcd34d, stop:1 #f97316);
+                    background-color: #2196f3;    /* آبی */
                     color: white;
+                    border: 2px solid white;
+                    box-shadow: 0px 4px 16px 0px #1565c060;
+                    /* شبیه سایه برای حالت برجسته */
                 }
                 QPushButton:hover {
-                    background-color: #ff7f50;
+                    background-color: #1565c0;
+                    box-shadow: none;
+                    border: 2px solid #2196f3;
                 }
             """
             )
@@ -156,7 +162,7 @@ class MainLauncherWindow(QMainWindow):
         main_layout.addLayout(button_layout)
         main_layout.addSpacing(30)
         main_layout.addLayout(guide_layout)
-        main_layout.addStretch(2)  # <-- راهنما پایین‌تر ولی داخل صفحه
+        main_layout.addStretch(1)  # <-- راهنما پایین‌تر ولی داخل صفحه
 
         central.setLayout(main_layout)
 

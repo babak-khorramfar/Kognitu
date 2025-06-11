@@ -241,16 +241,16 @@ class BoardScene(QGraphicsScene):
 
         # --- کلمه START ---
         text_item = QGraphicsTextItem("START")
-        font = QFont("Game Changer", 42, QFont.Bold)
+        font = QFont("ComicNeue", 36, QFont.Bold)
         text_item.setFont(font)
-        text_item.setDefaultTextColor(Qt.darkRed)
+        text_item.setDefaultTextColor(QColor("#2196f3"))
         text_item.setRotation(90)
         self.addItem(text_item)
         self.static_items.append(text_item)
 
         # --- فلش ---
         arrow = QGraphicsTextItem("→")
-        arrow.setFont(QFont("Game Changer", 38, QFont.Bold))
+        arrow.setFont(QFont("ComicNeue", 38, QFont.Bold))
         arrow.setDefaultTextColor(Qt.darkRed)
         self.addItem(arrow)
         self.static_items.append(arrow)
