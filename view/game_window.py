@@ -22,6 +22,9 @@ from view.board_item import BoardItem
 class GameWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        arrow_pixmap = QPixmap("resources/images/cursor_arrow.png")
+        arrow_cursor = QCursor(arrow_pixmap, hotX=0, hotY=0)
+        self.setCursor(arrow_cursor)
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.showFullScreen()
 
@@ -49,19 +52,21 @@ class GameWindow(QMainWindow):
 
         btn_generate = QPushButton("Generate Layout")
         btn_generate.clicked.connect(self._do_layout)
-        btn_generate.setCursor(Qt.PointingHandCursor)
+        btn_generate.setCursor(
+            QCursor(QPixmap("resources/images/cursor_hand.png"), 0, 0)
+        )
 
         btn_save = QPushButton("💾 Save Layout")
         btn_save.clicked.connect(self.save_layout)
-        btn_save.setCursor(Qt.PointingHandCursor)
+        btn_save.setCursor(QCursor(QPixmap("resources/images/cursor_hand.png"), 0, 0))
 
         btn_load = QPushButton("📥 Load Layout")
         btn_load.clicked.connect(self.load_layout)
-        btn_load.setCursor(Qt.PointingHandCursor)
+        btn_load.setCursor(QCursor(QPixmap("resources/images/cursor_hand.png"), 0, 0))
 
         btn_back = QPushButton("Back to Launcher")
         btn_back.clicked.connect(self.back_to_launcher)
-        btn_back.setCursor(Qt.PointingHandCursor)
+        btn_back.setCursor(QCursor(QPixmap("resources/images/cursor_hand.png"), 0, 0))
         btn_back.setStyleSheet(
             """
             QPushButton {

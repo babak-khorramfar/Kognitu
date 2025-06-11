@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QGraphicsPixmapItem
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt, QPointF
+from PyQt5.QtGui import QCursor
 
 
 class BoardItem(QGraphicsPixmapItem):
@@ -31,7 +32,7 @@ class BoardItem(QGraphicsPixmapItem):
         self._last_pos = QPointF()
         self._last_rotation = 0
 
-        self.setCursor(Qt.PointingHandCursor)
+        self.setCursor(QCursor(QPixmap("resources/images/cursor_hand.png"), 0, 0))
 
     def mousePressEvent(self, event):
         if event.button() == Qt.RightButton:

@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import (
     QGraphicsScene,
     QFrame,
 )
-from PyQt5.QtGui import QPixmap, QFont
+from PyQt5.QtGui import QPixmap, QFont, QCursor
 from PyQt5.QtCore import Qt, QTimer
 from view.game_window import GameWindow
 from view.board_item import BoardItem
@@ -23,6 +23,10 @@ class MainLauncherWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("HipHop")
+        # کرسر سفارشی فلش
+        arrow_pixmap = QPixmap("resources/images/cursor_arrow.png")
+        arrow_cursor = QCursor(arrow_pixmap, hotX=0, hotY=0)
+        self.setCursor(arrow_cursor)
 
         screen = QApplication.primaryScreen()
         rect = screen.geometry()
@@ -67,7 +71,7 @@ class MainLauncherWindow(QMainWindow):
             ("Exit", self.close),
         ]:
             btn = QPushButton(text)
-            btn.setCursor(Qt.PointingHandCursor)
+            btn.setCursor(QCursor(QPixmap("resources/images/cursor_hand.png"), 0, 0))
             btn.setFixedHeight(60)
             btn.setFixedWidth(400)
             btn.setFont(QFont("ComicNeue", 18))
